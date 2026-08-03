@@ -1,0 +1,989 @@
+<title>Análisis del backend — UnDiaMas</title>
+
+<style>
+  /* ---------------------------------------------------------------
+     Tokens. El acento es azul pizarra (expediente clínico); el verde,
+     ámbar y rojo quedan RESERVADOS para la severidad — el mismo
+     semáforo que usa la app. Desaturados a propósito: este documento
+     informa, no alarma.
+     --------------------------------------------------------------- */
+  :root {
+    --ground:      #F6F7F9;
+    --surface:     #FFFFFF;
+    --surface-alt: #EDEFF3;
+    --ink:         #171B22;
+    --ink-soft:    #4C5665;
+    --ink-faint:   #78828F;
+    --rule:        #DCE0E7;
+    --rule-strong: #C3C9D3;
+    --accent:      #2D4A7C;
+    --accent-soft: #E5EAF3;
+
+    --sev-red:     #A8322C;
+    --sev-red-bg:  #F6E5E4;
+    --sev-amber:   #8A5A0F;
+    --sev-amber-bg:#F7ECD9;
+    --sev-green:   #1F6B4C;
+    --sev-green-bg:#DFEEE7;
+
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+
+    --measure: 66ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:      #101319;
+      --surface:     #171B23;
+      --surface-alt: #1E232C;
+      --ink:         #E5E9F0;
+      --ink-soft:    #A3ADBC;
+      --ink-faint:   #78838F;
+      --rule:        #262C37;
+      --rule-strong: #363E4B;
+      --accent:      #92AAE0;
+      --accent-soft: #1C2434;
+
+      --sev-red:     #E8837C;
+      --sev-red-bg:  #2C1B1A;
+      --sev-amber:   #DDA74F;
+      --sev-amber-bg:#2A2216;
+      --sev-green:   #6FBF9B;
+      --sev-green-bg:#152520;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #101319;
+    --surface:     #171B23;
+    --surface-alt: #1E232C;
+    --ink:         #E5E9F0;
+    --ink-soft:    #A3ADBC;
+    --ink-faint:   #78838F;
+    --rule:        #262C37;
+    --rule-strong: #363E4B;
+    --accent:      #92AAE0;
+    --accent-soft: #1C2434;
+
+    --sev-red:     #E8837C;
+    --sev-red-bg:  #2C1B1A;
+    --sev-amber:   #DDA74F;
+    --sev-amber-bg:#2A2216;
+    --sev-green:   #6FBF9B;
+    --sev-green-bg:#152520;
+  }
+
+  :root[data-theme="light"] {
+    --ground:      #F6F7F9;
+    --surface:     #FFFFFF;
+    --surface-alt: #EDEFF3;
+    --ink:         #171B22;
+    --ink-soft:    #4C5665;
+    --ink-faint:   #78828F;
+    --rule:        #DCE0E7;
+    --rule-strong: #C3C9D3;
+    --accent:      #2D4A7C;
+    --accent-soft: #E5EAF3;
+
+    --sev-red:     #A8322C;
+    --sev-red-bg:  #F6E5E4;
+    --sev-amber:   #8A5A0F;
+    --sev-amber-bg:#F7ECD9;
+    --sev-green:   #1F6B4C;
+    --sev-green-bg:#DFEEE7;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 6vw, 4.5rem) clamp(1.1rem, 4vw, 3rem) 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  /* --- Tipografía ------------------------------------------------ */
+  h1, h2, h3, h4 { text-wrap: balance; line-height: 1.2; }
+
+  h1 {
+    font-size: clamp(1.95rem, 5vw, 2.9rem);
+    font-weight: 640;
+    letter-spacing: -0.022em;
+    margin: 0;
+  }
+
+  h2 {
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+    font-weight: 620;
+    letter-spacing: -0.015em;
+    margin: 0;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid var(--rule-strong);
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+
+  h2 .num {
+    font-family: var(--font-mono);
+    font-size: 0.72em;
+    font-weight: 500;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 640;
+    letter-spacing: -0.005em;
+    margin: 0;
+  }
+
+  h4 {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  p { margin: 0; max-width: var(--measure); }
+
+  a { color: var(--accent); text-underline-offset: 0.18em; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--ink-faint);
+  }
+
+  .lede {
+    font-size: 1.08rem;
+    color: var(--ink-soft);
+  }
+
+  code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+
+  :not(pre) > code {
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 0.08em 0.34em;
+    white-space: nowrap;
+  }
+
+  /* --- Cabecera -------------------------------------------------- */
+  header.head { display: flex; flex-direction: column; gap: 1rem; }
+
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .meta div {
+    padding: 0.7rem 0.9rem 0.75rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .meta dt {
+    font-family: var(--font-mono);
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: var(--ink-faint);
+  }
+
+  .meta dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- Marcador de hallazgos ------------------------------------- */
+  .tally {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  .tally > div {
+    background: var(--surface);
+    padding: 0.95rem 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .tally .n {
+    font-family: var(--font-mono);
+    font-size: 1.85rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.05;
+  }
+
+  .tally .k {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: var(--ink-faint);
+  }
+
+  .tally .n.crit  { color: var(--sev-red); }
+  .tally .n.imp   { color: var(--sev-amber); }
+  .tally .n.men   { color: var(--sev-green); }
+
+  /* --- Secciones ------------------------------------------------- */
+  section { display: flex; flex-direction: column; gap: 1.25rem; }
+  .block  { display: flex; flex-direction: column; gap: 0.7rem; }
+
+  /* --- Tablas ---------------------------------------------------- */
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); background: var(--surface); }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 34rem;
+    font-size: 0.9rem;
+  }
+
+  thead th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface-alt); }
+
+  td.col { font-family: var(--font-mono); font-size: 0.84rem; white-space: nowrap; }
+  td.num { font-variant-numeric: tabular-nums; }
+
+  /* --- Estado y severidad ---------------------------------------- */
+  .dot {
+    display: inline-block;
+    width: 0.52em;
+    height: 0.52em;
+    border-radius: 50%;
+    margin-right: 0.45em;
+    vertical-align: 0.06em;
+  }
+  .dot.ok   { background: var(--sev-green); }
+  .dot.warn { background: var(--sev-amber); }
+  .dot.bad  { background: var(--sev-red); }
+
+  .state { white-space: nowrap; font-size: 0.85rem; }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.22em 0.55em;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+  }
+  .chip.crit { color: var(--sev-red);   background: var(--sev-red-bg); }
+  .chip.imp  { color: var(--sev-amber); background: var(--sev-amber-bg); }
+  .chip.men  { color: var(--sev-green); background: var(--sev-green-bg); }
+
+  /* --- Hallazgos: lista con regla, sin tarjetas ------------------- */
+  .findings {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--rule);
+  }
+
+  .finding {
+    display: grid;
+    grid-template-columns: 3.1rem 1fr;
+    gap: 0 1rem;
+    padding: 1.15rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .finding .id {
+    font-family: var(--font-mono);
+    font-size: 1.02rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+    padding-top: 0.02rem;
+  }
+
+  .finding.sev-crit .id { color: var(--sev-red); }
+  .finding.sev-imp  .id { color: var(--sev-amber); }
+  .finding.sev-men  .id { color: var(--sev-green); }
+
+  .finding .body { display: flex; flex-direction: column; gap: 0.5rem; }
+  .finding p { font-size: 0.955rem; color: var(--ink-soft); }
+  .finding ul { margin: 0; padding-left: 1.1rem; color: var(--ink-soft); font-size: 0.955rem; max-width: var(--measure); }
+  .finding li { margin-bottom: 0.2rem; }
+
+  .where {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-faint);
+  }
+
+  /* --- Bloques de código / contrato ------------------------------ */
+  pre {
+    margin: 0;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.65;
+  }
+
+  pre .cmt { color: var(--ink-faint); }
+
+  /* --- Diagrama de flujo ----------------------------------------- */
+  .flow {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 1.1rem 1.2rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    white-space: pre;
+  }
+
+  /* --- Nota ------------------------------------------------------ */
+  .note {
+    background: var(--accent-soft);
+    border: 1px solid var(--rule);
+    padding: 0.85rem 1rem;
+    font-size: 0.93rem;
+    color: var(--ink-soft);
+  }
+  .note strong { color: var(--ink); }
+
+  /* --- Listas de esquema ----------------------------------------- */
+  .schema-rest {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+  .schema-rest li { padding-left: 1.1rem; text-indent: -1.1rem; }
+  .schema-rest .cname { font-family: var(--font-mono); color: var(--ink); font-size: 0.87rem; }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.2rem;
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    max-width: var(--measure);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    tbody tr td { transition: background 120ms ease; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="head">
+    <p class="eyebrow">Auditoría técnica · 3 de agosto de 2026</p>
+    <h1>Análisis del backend</h1>
+    <p class="lede">
+      Estado real del sistema de UnDiaMas: qué hay en Firestore, qué hacen las tres Cloud
+      Functions, y los 17 puntos donde el código no hace lo que el proyecto asume que hace.
+    </p>
+
+    <dl class="meta">
+      <div><dt>Rama</dt><dd>main</dd></div>
+      <div><dt>Commit</dt><dd>38a5b98</dd></div>
+      <div><dt>Tests functions</dt><dd>15 / 15 ✓</dd></div>
+      <div><dt>Tests shared</dt><dd>allTests ✓</dd></div>
+    </dl>
+
+    <div class="tally">
+      <div><span class="n">17</span><span class="k">hallazgos</span></div>
+      <div><span class="n crit">5</span><span class="k">críticos</span></div>
+      <div><span class="n imp">8</span><span class="k">importantes</span></div>
+      <div><span class="n men">4</span><span class="k">menores</span></div>
+    </div>
+
+    <p class="eyebrow" style="margin-top:0.4rem">
+      Alcance · 8 archivos de Cloud Functions · firestore.rules · firestore.indexes.json ·
+      firebase.json · 13 archivos de la capa de datos KMP · consumo desde AppState
+    </p>
+  </header>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2><span class="num">01</span> Arquitectura general</h2>
+
+    <p>No hay servidor propio. Todo el «backend» son tres piezas:</p>
+
+    <div class="flow">App KMP (Compose)
+   │
+   ├─ AppState ──── repositorios ────► Firestore (colecciones planas en raíz)
+   │                                        │
+   │                                        ├─ trigger onCreate ─► Cloud Functions
+   │                                        │
+   └─ CloudFunctionsAiProvider ──callable──► agentChat ──► Gemini 2.5 Flash
+                                                 │
+                                                 └─ Admin SDK ─► alerts / ai_logs</div>
+
+    <p>
+      Decisión estructural clave: <strong>todas las colecciones son raíz, no subcolecciones</strong>.
+      El aislamiento entre usuarios sale del campo <code>userId</code> dentro del documento, no de la ruta.
+    </p>
+
+    <div class="note">
+      Esto atraviesa todo el código: <strong>toda consulta del cliente debe filtrar por <code>userId</code></strong>,
+      o Firestore rechaza la consulta entera con <code>PERMISSION_DENIED</code> — aunque el usuario tenga
+      documentos propios.
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2><span class="num">02</span> Estructura de la base de datos</h2>
+
+    <div class="block">
+      <h3>2.1 · Mapa de colecciones</h3>
+      <p>
+        Nombres canónicos en el objeto <code>Colecciones</code> de <code>ClinicalRepositories.kt</code>,
+        espejados en <code>functions/src/index.ts</code>.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Colección</th><th>Doc ID</th><th>Escribe</th><th>Lee</th><th>Estado real</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="col">users</td><td class="col">uid</td><td>app (sin <code>role</code>)</td><td>dueño + terapeuta</td><td class="state"><span class="dot ok"></span>activa</td></tr>
+            <tr><td class="col">sobriety_trackers</td><td class="col">uid</td><td>app</td><td>dueño + terapeuta</td><td class="state"><span class="dot ok"></span>activa</td></tr>
+            <tr><td class="col">check_ins</td><td class="col">auto</td><td>app</td><td>dueño + terapeuta + CF</td><td class="state"><span class="dot ok"></span>activa</td></tr>
+            <tr><td class="col">ai_messages</td><td class="col">auto</td><td>app</td><td><strong>solo dueño</strong></td><td class="state"><span class="dot ok"></span>activa</td></tr>
+            <tr><td class="col">journal_entries</td><td class="col">auto</td><td>app</td><td>dueño + terapeuta</td><td class="state"><span class="dot ok"></span>activa</td></tr>
+            <tr><td class="col">mood_logs</td><td class="col">auto</td><td>app</td><td>dueño + terapeuta</td><td class="state"><span class="dot ok"></span>activa</td></tr>
+            <tr><td class="col">ai_logs</td><td class="col">auto</td><td><strong>solo Cloud Function</strong></td><td>dueño + terapeuta</td><td class="state"><span class="dot ok"></span>activa</td></tr>
+            <tr><td class="col">alerts</td><td class="col">auto</td><td><strong>solo Cloud Function</strong></td><td>solo dueño</td><td class="state"><span class="dot ok"></span>activa</td></tr>
+            <tr><td class="col">traffic_light_logs</td><td class="col">auto</td><td>app</td><td>dueño + terapeuta</td><td class="state"><span class="dot warn"></span>repo sin usar</td></tr>
+            <tr><td class="col">relapse_events</td><td class="col">auto</td><td>app</td><td>dueño + terapeuta</td><td class="state"><span class="dot bad"></span>sin repositorio</td></tr>
+            <tr><td class="col">sobriety_logs</td><td class="col">auto</td><td>app</td><td>dueño + terapeuta</td><td class="state"><span class="dot bad"></span>sin repositorio</td></tr>
+            <tr><td class="col">sessions</td><td class="col">auto</td><td>terapeuta</td><td>paciente + terapeuta</td><td class="state"><span class="dot bad"></span>sin repositorio</td></tr>
+            <tr><td class="col">clinical_notes</td><td class="col">auto</td><td>terapeuta</td><td>paciente + terapeuta</td><td class="state"><span class="dot bad"></span>sin repositorio</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="block">
+      <h3>2.2 · Esquema por colección</h3>
+      <p>
+        Fuente de verdad: <code>ClinicalDocs.kt</code>. Todo campo tiene valor por defecto — los documentos
+        se crearon en momentos distintos y no traen los mismos campos — y toda fecha es
+        <code>Timestamp</code> de Firestore nullable, nunca <code>Long</code>.
+      </p>
+
+      <h4>/users/{uid}</h4>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr></thead>
+          <tbody>
+            <tr><td class="col">uid</td><td class="col">String</td><td>Duplicado del doc ID (ver hallazgo 05)</td></tr>
+            <tr><td class="col">displayName</td><td class="col">String</td><td></td></tr>
+            <tr><td class="col">email</td><td class="col">String</td><td></td></tr>
+            <tr><td class="col">role</td><td class="col">String</td><td><code>patient</code> | <code>therapist</code> — <strong>el cliente nunca lo escribe</strong></td></tr>
+            <tr><td class="col">authProvider</td><td class="col">String</td><td></td></tr>
+            <tr><td class="col">status</td><td class="col">String</td><td>default <code>active</code></td></tr>
+            <tr><td class="col">isEmailVerified</td><td class="col">Boolean</td><td></td></tr>
+            <tr><td class="col">lastLogin<br>lastLoginAt</td><td class="col">Timestamp?</td><td>Docs antiguos usan el primero; se leen ambos</td></tr>
+            <tr><td class="col">createdAt</td><td class="col">Timestamp?</td><td></td></tr>
+            <tr><td class="col">contactosEmergencia</td><td class="col">List&lt;{nombre,<br>telefono, rol}&gt;</td><td><strong>El primero es el contacto de confianza que lee el protocolo de emergencia</strong></td></tr>
+            <tr><td class="col">porQuePersonal</td><td class="col">String</td><td>«Mi por qué»</td></tr>
+            <tr><td class="col">recordRachaSegundos</td><td class="col">Long</td><td>Récord histórico, se conserva tras recaída</td></tr>
+            <tr><td class="col">fcmToken</td><td class="col">String?</td><td>Para la notificación de emergencia — <strong>hoy siempre <code>null</code>, ver hallazgo 01</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 style="margin-top:0.6rem">Colecciones restantes</h4>
+      <ul class="schema-rest">
+        <li><span class="cname">/sobriety_trackers/{uid}</span> — userId · startDate · dailySavingsRate · currency (<code>MXN</code>) · trafficLightStatus (<code>GREEN</code>) · lastStatusUpdate</li>
+        <li><span class="cname">/check_ins</span> — userId · riskLevel (<code>GREEN</code>) · cravingLevel: Int · mood · triggers: List · note · answers: Map · timestamp</li>
+        <li><span class="cname">/ai_messages</span> — userId · role (<code>USUARIO</code>|<code>ASISTENTE</code>) · content · riskLevelContext? · timestamp</li>
+        <li><span class="cname">/alerts</span> — userId · riskLevel (<code>VERDE</code>) · message · handled: Boolean · timestamp &nbsp;<em>· escrito solo por agentChat</em></li>
+        <li><span class="cname">/ai_logs</span> — userId · checkInId · aiMessageId · riskLevel · createdAt &nbsp;<em>· escrito solo por onAiMessageCreated</em></li>
+        <li><span class="cname">/traffic_light_logs</span> — userId · status · reason · triggerLevel (1..5) · suggestedActions: List · timestamp</li>
+        <li><span class="cname">/relapse_events</span> — userId · note · triggers: List · previousStreakSeconds: Long · timestamp</li>
+        <li><span class="cname">/sobriety_logs</span> — userId · streakSeconds: Long · savedAmount: Double · timestamp</li>
+        <li><span class="cname">/journal_entries</span> — userId · content · createdAt</li>
+        <li><span class="cname">/mood_logs</span> — userId · mood (<code>NEUTRAL</code>) · timestamp</li>
+        <li><span class="cname">/sessions</span> — patientId · therapistId · status (<code>scheduled</code>) · scheduledAt · notes</li>
+        <li><span class="cname">/clinical_notes</span> — patientId · therapistId · content · createdAt</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h3>2.3 · Convención del semáforo</h3>
+      <p>Hay <strong>tres vocabularios</strong> para el mismo valor:</p>
+
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Capa</th><th>Valores</th></tr></thead>
+          <tbody>
+            <tr><td>Firestore (persistencia)</td><td class="col">GREEN / YELLOW / RED</td></tr>
+            <tr><td>Dominio Kotlin</td><td class="col">VERDE / AMARILLO / ROJO</td></tr>
+            <tr><td>Cloud Functions (<code>types.ts</code>)</td><td class="col">VERDE / AMARILLO / ROJO</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        La traducción está <strong>duplicada</strong> en <code>RiskLevelCodes.kt</code> y
+        <code>firestoreMappers.ts:toRiskLevel()</code>. Ambas aceptan los dos idiomas y ambas caen a
+        <strong>verde</strong> ante un código desconocido — decisión deliberada y correcta: inventar un
+        <code>ROJO</code> por un dato corrupto dispararía el protocolo de emergencia de alguien sin motivo.
+      </p>
+    </div>
+
+    <div class="block">
+      <h3>2.4 · Índices</h3>
+      <p><code>firestore.indexes.json</code> declara <strong>uno solo</strong>:</p>
+      <pre>check_ins: (userId ASC, timestamp DESC)</pre>
+      <p>
+        Sirve a las dos queries de Cloud Functions. Los repositorios del cliente no necesitan más
+        <em>porque ordenan en memoria</em> — que es a su vez el hallazgo 14.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2><span class="num">03</span> Endpoints</h2>
+
+    <div class="block">
+      <h3>3.1 · onCheckInCreated <span class="eyebrow">— trigger Firestore</span></h3>
+      <ul class="schema-rest">
+        <li><strong>Disparo:</strong> <code>check_ins/{checkInId}</code> onCreate</li>
+        <li><strong>Flujo:</strong> lee <code>userId</code> del documento → carga <code>users/{userId}</code> → <code>buildEmergencyAction()</code> → si <code>riskLevel == ROJO</code>, envía push FCM y registra el contacto de confianza sugerido</li>
+        <li><strong>Lógica pura:</strong> <code>emergencyProtocol.ts</code>, testeada sin emulador</li>
+        <li><strong>Salidas silenciosas:</strong> documento sin <code>userId</code>, o perfil inexistente → <code>return</code> sin log</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h3>3.2 · onAiMessageCreated <span class="eyebrow">— trigger Firestore</span></h3>
+      <ul class="schema-rest">
+        <li><strong>Disparo:</strong> <code>ai_messages/{aiMessageId}</code> onCreate</li>
+        <li><strong>Flujo:</strong> busca el check-in más reciente del usuario — el chat no está atado a un check-in concreto en la UI, así que se usa el vigente como contexto de riesgo → <code>buildLogIaTrace()</code> → escribe en <code>ai_logs</code></li>
+        <li><strong>Lógica pura:</strong> <code>logIaTrace.ts</code>. Lanza si el <code>userId</code> del mensaje no coincide con el del check-in</li>
+        <li><strong>Salida silenciosa:</strong> usuario sin ningún check-in → no se escribe traza</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h3>3.3 · agentChat <span class="eyebrow">— HTTPS callable</span></h3>
+      <pre>Request  <span class="cmt">(lo que envía la app)</span>:   { prompt, riskLevel, history: [{role, content}] }
+Request  <span class="cmt">(lo que la función lee)</span>: { prompt }          <span class="cmt">← ver hallazgo 02</span>
+Response:                          { reply, savedAlertId? }
+Errores:                           unauthenticated | invalid-argument</pre>
+
+      <ul class="schema-rest">
+        <li><strong>uid:</strong> siempre de <code>request.auth.uid</code>, <strong>nunca del payload</strong> — el modelo no puede pedir datos ajenos aunque lo intente vía los argumentos de una tool. Diseño correcto.</li>
+        <li><strong>Secreto:</strong> <code>GEMINI_API_KEY</code> vía <code>defineSecret</code>. La app nunca la lleva.</li>
+        <li><strong>Modelo:</strong> <code>gemini-2.5-flash</code> (REST)</li>
+        <li><strong>Orquestación:</strong> <code>runAgentTurn()</code> — primer turno → ejecuta tools → segundo turno con resultados. Puro y testeado, con el cliente Gemini inyectado.</li>
+      </ul>
+
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Tool expuesta al modelo</th><th>Parámetros</th><th>Efecto</th></tr></thead>
+          <tbody>
+            <tr><td class="col">leer_historial_reciente</td><td class="col">limite: number = 5</td><td>Lee check-ins del <strong>uid autenticado</strong> (no parametrizable)</td></tr>
+            <tr><td class="col">guardar_alerta</td><td class="col">nivelRiesgo, mensaje</td><td>Inserta en <code>/alerts</code> con Admin SDK</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="block">
+      <h3>3.4 · Lógica sin endpoint</h3>
+      <p>
+        <code>aggregateRiskTrends()</code> (<code>statsAggregation.ts</code>) está implementada y testeada,
+        pero <strong>no la exporta ninguna función</strong>. Ver hallazgo 07.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2><span class="num">04</span> Modelo de seguridad</h2>
+
+    <p>
+      Regla base: cada paciente solo ve lo suyo. Excepción explícita del proyecto: las cuentas con
+      <code>role == "therapist"</code> pueden <strong>leer</strong> datos clínicos de pacientes,
+      nunca escribirlos.
+    </p>
+
+    <h4>Aciertos del diseño actual</h4>
+    <ul class="schema-rest">
+      <li>El campo <code>role</code> está <strong>prohibido de escritura desde el cliente en todos los casos</strong> (<code>noTocaRol()</code> / <code>noTraeRolNuevo()</code>). Sin esto, cualquier paciente se ascendería a terapeuta y leería los historiales de todos.</li>
+      <li><code>ai_messages</code> — la conversación con el asistente — <strong>no se abre al terapeuta</strong>. Correcto: es el dato más íntimo de la app.</li>
+      <li><code>ai_logs</code> y <code>alerts</code> son <code>allow write: if false</code>: solo Admin SDK.</li>
+      <li><code>match /{document=**} { allow read, write: if false; }</code> cierra todo lo no declarado.</li>
+    </ul>
+
+    <div class="note">
+      <strong>Debilidades:</strong> ver hallazgos 04 (agujero en <code>ai_messages</code>),
+      05 (inconsistencia de doc ID), 10 (sin App Check) y 16 (coste de <code>esTerapeuta()</code>).
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2><span class="num">05</span> Hallazgos</h2>
+
+    <p>
+      La severidad usa el mismo semáforo que la app. Los números son los que referencia el
+      plan de trabajo de la sección 06.
+    </p>
+
+    <p><span class="chip crit">Críticos</span></p>
+
+    <div class="findings">
+
+      <div class="finding sev-crit">
+        <div class="id">01</div>
+        <div class="body">
+          <h3>El protocolo de emergencia nunca envía la notificación</h3>
+          <p>
+            Es la pieza más crítica del sistema según <code>CLAUDE.md</code>, y está rota de punta a punta:
+            no existe ningún <code>FirebaseMessaging</code>, ningún <code>FirebaseMessagingService</code> en
+            el manifiesto, ninguna escritura de <code>fcmToken</code>. El campo existe y la función lo lee,
+            pero <strong>siempre vale <code>null</code></strong>, así que <code>getMessaging().send()</code>
+            no se ejecuta jamás. El único aviso que llega al usuario es la notificación
+            <em>local</em> de biometría, que es otra cosa.
+          </p>
+          <p class="where">ClinicalDocs.kt:61 · functions/src/index.ts:49 · AndroidManifest.xml</p>
+        </div>
+      </div>
+
+      <div class="finding sev-crit">
+        <div class="id">02</div>
+        <div class="body">
+          <h3>agentChat ignora el nivel de riesgo y el historial de conversación</h3>
+          <p>
+            El cliente envía <code>{prompt, riskLevel, history}</code> pero la función solo lee
+            <code>request.data.prompt</code>. Consecuencias:
+          </p>
+          <ul>
+            <li>el asistente <strong>no tiene memoria</strong> entre turnos;</li>
+            <li><strong>no adapta el tono al semáforo</strong>, que es justo lo que pide la Fase 2·05;</li>
+            <li>no hay <em>system prompt</em>: el modelo no sabe que habla con alguien en recuperación de una adicción.</li>
+          </ul>
+          <p class="where">CloudFunctionsAiProvider.kt:43-47 · functions/src/index.ts:108</p>
+        </div>
+      </div>
+
+      <div class="finding sev-crit">
+        <div class="id">03</div>
+        <div class="body">
+          <h3>El segundo turno de function-calling está mal formado</h3>
+          <p>
+            Se envía <code>role: "function"</code> sin incluir antes el turno del modelo con su
+            <code>functionCall</code>. La API de Gemini exige la secuencia
+            <code>user → model(functionCall) → function(functionResponse)</code>. Los tests de
+            <code>aiAgent</code> no lo detectan porque mockean el <code>GeminiClient</code>. En producción,
+            cualquier respuesta que use tools falla o alucina.
+          </p>
+          <p class="where">functions/src/geminiClient.ts:29-36</p>
+        </div>
+      </div>
+
+      <div class="finding sev-crit">
+        <div class="id">04</div>
+        <div class="body">
+          <h3>Agujero en las reglas de ai_messages</h3>
+          <p>
+            La regla usa un <code>OR</code>: basta con que <code>request.resource.data.userId == mi uid</code>
+            para pasar. Un usuario que conozca un doc ID ajeno puede <strong>sobrescribir el mensaje de otra
+            persona</strong> poniéndose a sí mismo como <code>userId</code>. El <code>update</code> debe exigir
+            <em>ambas</em> condiciones: dueño del documento existente <strong>y</strong> del entrante.
+          </p>
+          <p class="where">firestore.rules:109-113</p>
+        </div>
+      </div>
+
+      <div class="finding sev-crit">
+        <div class="id">05</div>
+        <div class="body">
+          <h3>Inconsistencia de doc ID que rompe el protocolo de emergencia</h3>
+          <p>
+            <code>onCheckInCreated</code> busca el perfil con <code>.doc(userId)</code> y hace
+            <code>return</code> si no existe. Pero <code>UsersRepository</code> está escrito asumiendo que
+            <strong>conviven documentos con ID autogenerado</strong>. Para esos usuarios, el semáforo rojo se
+            queda en silencio absoluto. Peor aún: esos documentos tampoco son legibles por su propio dueño,
+            porque la regla <code>esDuenio(userId)</code> compara contra el <em>ID del documento</em>, no
+            contra el campo <code>uid</code>. Hay que fijar una sola convención (doc ID == uid) y migrar.
+          </p>
+          <p class="where">functions/src/index.ts:42 · ClinicalRepositories.kt:42-49 · firestore.rules:20-22</p>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:1.4rem"><span class="chip imp">Importantes</span></p>
+
+    <div class="findings">
+      <div class="finding sev-imp">
+        <div class="id">06</div>
+        <div class="body">
+          <h3>Las recaídas no se persisten</h3>
+          <p>
+            <code>RelapseEvent</code> existe en dominio, <code>relapse_events</code> tiene reglas y esquema…
+            y ningún repositorio. El reinicio de racha conservando el récord (Fase 2·04, Fase 4·10) no deja
+            rastro en la base.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-imp">
+        <div class="id">07</div>
+        <div class="body">
+          <h3>aggregateRiskTrends es código muerto</h3>
+          <p>
+            Testeada, no exportada por ninguna función. No hay endpoint de estadísticas: la Fase 2·06 queda
+            sin cerrar.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-imp">
+        <div class="id">08</div>
+        <div class="body">
+          <h3>No hay recordatorios de check-in</h3>
+          <p>La Fase 3·09 los pide; no existe ninguna función <code>onSchedule</code>.</p>
+        </div>
+      </div>
+
+      <div class="finding sev-imp">
+        <div class="id">09</div>
+        <div class="body">
+          <h3>Falta Google Sign-In</h3>
+          <p>
+            La Fase 3·07 exige Google + anónimo; solo hay anónimo + email/password en
+            <code>AuthRepositoryImpl</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-imp">
+        <div class="id">10</div>
+        <div class="body">
+          <h3>agentChat sin App Check ni límite de uso</h3>
+          <p>
+            Un callable autenticado que gasta tokens de Gemini, sin <code>enforceAppCheck</code>, sin rate
+            limit por usuario, sin tope de longitud de <code>prompt</code>. Con sesión anónima habilitada,
+            crear cuentas nuevas es gratis e ilimitado.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-imp">
+        <div class="id">11</div>
+        <div class="body">
+          <h3>Storage no está configurado</h3>
+          <p>
+            La Fase 3·07 lo menciona para adjuntos del diario; no hay <code>storage.rules</code> ni sección
+            <code>storage</code> en <code>firebase.json</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-imp">
+        <div class="id">12</div>
+        <div class="body">
+          <h3>Las alertas no se pueden marcar como atendidas</h3>
+          <p>
+            <code>AlertDoc.handled</code> existe, pero las reglas son <code>allow write: if false</code> y
+            <code>AlertaRepositoryImpl</code> no tiene escritura. El campo queda congelado en
+            <code>false</code> para siempre.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-imp">
+        <div class="id">13</div>
+        <div class="body">
+          <h3>Datos que se pierden al reinstalar</h3>
+          <p>
+            Cápsulas del tiempo, hábitos, anclas y <code>urgeSessionsCompleted</code> viven solo en
+            <code>mutableStateListOf</code> dentro de <code>AppState</code>. Sin colección, sin reglas, sin
+            sincronización entre dispositivos.
+          </p>
+          <p class="where">AppState.kt:155-158</p>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:1.4rem"><span class="chip men">Menores</span></p>
+
+    <div class="findings">
+      <div class="finding sev-men">
+        <div class="id">14</div>
+        <div class="body">
+          <h3>Lecturas sin limit()</h3>
+          <p>
+            Todos los repositorios traen la colección completa del usuario y ordenan/recortan
+            <strong>en memoria</strong> (<code>.sortedByDescending{}.take(limit)</code>). Con un año de
+            check-ins diarios son cientos de documentos descargados por cada snapshot. Hay que mover
+            <code>orderBy</code>/<code>limit</code> a la query.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-men">
+        <div class="id">15</div>
+        <div class="body">
+          <h3>Índices insuficientes</h3>
+          <p>
+            Solo existe <code>check_ins(userId, timestamp)</code>. Al corregir el 14 harán falta 5-6 índices
+            compuestos más — <code>ai_messages</code>, <code>journal_entries</code>, <code>mood_logs</code>,
+            <code>alerts</code>, <code>ai_logs</code>, <code>traffic_light_logs</code> — todos con la forma
+            <code>(userId ASC, timestamp DESC)</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-men">
+        <div class="id">16</div>
+        <div class="body">
+          <h3>esTerapeuta() cuesta una lectura de Firestore por evaluación de regla</h3>
+          <p>
+            El propio comentario del archivo lo admite. Migrar a <em>custom claims</em> en el token elimina el
+            coste y rompe la dependencia circular con <code>/users</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="finding sev-men">
+        <div class="id">17</div>
+        <div class="body">
+          <h3>UsersRepository.listPatients() falla para pacientes</h3>
+          <p>
+            Un paciente que la llame recibe <code>PERMISSION_DENIED</code> sobre la consulta entera. Correcto
+            desde seguridad, pero la UI debe filtrar antes de invocarla.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2><span class="num">06</span> Orden de trabajo sugerido</h2>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Paso</th><th>Acción</th><th>Desbloquea</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td>FCM completo: obtener token → <code>users.fcmToken</code> → <code>FirebaseMessagingService</code></td>
+            <td>Hallazgo 01 — el semáforo rojo deja de ser decorativo</td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td>Unificar doc ID de <code>users</code> a uid + migración; corregir la regla de <code>ai_messages</code></td>
+            <td>04, 05, 17</td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td>Pasar <code>riskLevel</code> + <code>history</code> + system prompt a <code>agentChat</code>; corregir la secuencia de turnos en <code>RestGeminiClient</code>, con test contra emulador (no mockeado)</td>
+            <td>02, 03</td>
+          </tr>
+          <tr>
+            <td class="num">4</td>
+            <td><code>RelapseEventRepository</code> + escritura de <code>traffic_light_logs</code> en cada evaluación del semáforo</td>
+            <td>06 · cierra Fase 2·04</td>
+          </tr>
+          <tr>
+            <td class="num">5</td>
+            <td><code>limit()</code>/<code>orderBy</code> en query + índices compuestos</td>
+            <td>14, 15</td>
+          </tr>
+          <tr>
+            <td class="num">6</td>
+            <td>Callable de estadísticas sobre <code>aggregateRiskTrends</code> + <code>onSchedule</code> de recordatorios</td>
+            <td>07, 08 · cierra Fase 2·06 y 3·09</td>
+          </tr>
+          <tr>
+            <td class="num">7</td>
+            <td>App Check + rate limit en <code>agentChat</code>; Google Sign-In; <code>storage.rules</code></td>
+            <td>09, 10, 11</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Revisión estática del código en el commit indicado. No se ejecutó la app contra el proyecto de
+    Firebase real ni contra los emuladores; los hallazgos 01, 03 y 05 se apoyan en la lectura del
+    código y conviene confirmarlos en el emulador antes de cerrarlos.
+  </footer>
+
+</div>
