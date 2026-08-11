@@ -13,14 +13,18 @@ import (
 
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/ai"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/alerts"
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/analysis"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/auth"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/checkins"
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/community"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/config"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/db"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/httpx"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/journal"
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/lexicon"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/mood"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/notify"
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/rag"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/reminders"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/stats"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/therapist"
@@ -78,11 +82,49 @@ func run() error {
 	auth.NewHandler(auth.NewStore(pool), issuer).Routes(mux)
 	users.NewHandler(users.NewStore(pool), issuer).Routes(mux)
 	notify.NewHandler(hub, issuer).Routes(mux)
+	// El muro de comunidad. No depende de Gemini ni del RAG: es contenido de
+	// personas, moderado por personas.
+	community.NewHandler(community.NewStore(pool), issuer).Routes(mux)
 	alerts.NewHandler(alertSvc, issuer).Routes(mux)
 	tracker.NewHandler(trackerStore, issuer).Routes(mux)
 	checkins.NewHandler(checkInStore, issuer, onRedCheckIn(lightSvc)).Routes(mux)
-	journal.NewHandler(journal.NewStore(pool), issuer).Routes(mux)
-	mood.NewHandler(mood.NewStore(pool), issuer).Routes(mux)
+	// El clasificador de texto: lee el diario y el ánimo, y puede subir el
+	// semáforo. Se carga al arrancar para que un léxico mal formado sea un fallo
+	// de despliegue y no una sorpresa en la primera entrada de alguien.
+	lex, err := lexicon.Default()
+	if err != nil {
+		return err
+	}
+
+	// El RAG se arma siempre, aunque no haya API key: su modo léxico corre
+	// entero en el proceso y es el que atiende al diario. Los embeddings —que sí
+	// necesitan key— solo mejoran el chat. Un corpus mal formado impide el
+	// arranque a propósito: es un error de despliegue.
+	var embedder rag.Embedder
+	if cfg.GeminiAPIKey != "" {
+		embedder = rag.NewGeminiEmbedder(cfg.GeminiAPIKey, cfg.EmbeddingModel)
+	}
+	retriever, err := rag.New(lex, embedder)
+	if err != nil {
+		return err
+	}
+	if embedder != nil {
+		// En segundo plano: depender de la red para levantar el servidor sería
+		// cambiar una mejora por una caída.
+		go func() {
+			if err := retriever.Warmup(ctx); err != nil {
+				slog.Warn("el índice semántico no se pudo calentar; el RAG queda en modo léxico", "err", err)
+				return
+			}
+			slog.Info("índice semántico listo")
+		}()
+	}
+
+	analysisSvc := analysis.NewService(lex, lightSvc, retriever)
+	analysis.NewHandler(analysisSvc, issuer).Routes(mux)
+
+	journal.NewHandler(journal.NewStore(pool), issuer, analysisSvc.OnJournal).Routes(mux)
+	mood.NewHandler(mood.NewStore(pool), issuer, analysisSvc.OnMood).Routes(mux)
 	trafficlight.NewHandler(lightSvc, issuer).Routes(mux)
 	stats.NewHandler(statsStore, issuer).Routes(mux)
 	therapist.NewHandler(therapistStore, checkInStore, trackerStore,
@@ -97,8 +139,11 @@ func run() error {
 	if cfg.GeminiAPIKey == "" {
 		slog.Warn("GEMINI_API_KEY vacía: /v1/ai/* queda deshabilitado")
 	} else {
+		// Aquí el RAG sí usa embeddings: el mensaje del chat ya viaja a Gemini,
+		// así que embeberlo no revela nada nuevo. El diario, en cambio, se queda
+		// en modo local (ver internal/analysis).
 		ai.NewHandler(pool, ai.NewRESTClient(cfg.GeminiAPIKey, cfg.GeminiModel),
-			checkInStore, alertSvc, issuer).Routes(mux)
+			checkInStore, alertSvc, issuer, retriever).Routes(mux)
 	}
 
 	srv := &http.Server{

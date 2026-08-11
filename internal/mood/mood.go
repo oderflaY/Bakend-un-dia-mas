@@ -79,10 +79,14 @@ func Normalize(s string) string {
 type Handler struct {
 	store  *Store
 	issuer *auth.TokenIssuer
+	// Igual que en journal: devuelve el veredicto para adjuntarlo a la respuesta,
+	// y es `any` para no importar el paquete del clasificador.
+	onWrite func(ctx context.Context, userID, texto string) any
 }
 
-func NewHandler(store *Store, issuer *auth.TokenIssuer) *Handler {
-	return &Handler{store: store, issuer: issuer}
+func NewHandler(store *Store, issuer *auth.TokenIssuer,
+	onWrite func(context.Context, string, string) any) *Handler {
+	return &Handler{store: store, issuer: issuer, onWrite: onWrite}
 }
 
 func (h *Handler) Routes(mux *http.ServeMux) {
@@ -111,7 +115,17 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusInternalServerError, "internal", "no se pudo guardar el ánimo")
 		return
 	}
-	httpx.JSON(w, http.StatusCreated, l)
+
+	// La etiqueta de ánimo pasa por el mismo clasificador que el diario: para el
+	// léxico "ANSIOSO" es texto como cualquier otro.
+	var analisis any
+	if h.onWrite != nil {
+		analisis = h.onWrite(r.Context(), id.UserID, mood)
+	}
+	httpx.JSON(w, http.StatusCreated, struct {
+		Log
+		Analisis any `json:"analisis,omitempty"`
+	}{l, analisis})
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {

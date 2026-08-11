@@ -134,6 +134,23 @@ func (s *Service) Record(ctx context.Context, userID string, ev Evaluation, mess
 	return res, nil
 }
 
+// Current es el nivel vigente. Lo lee del tracker y no del último log porque el
+// tracker es lo que ve la app: si divergieran, mandaría el que la persona tiene
+// delante.
+func (s *Service) Current(ctx context.Context, userID string) (risk.Level, error) {
+	var code string
+	err := s.db.QueryRow(ctx,
+		`SELECT traffic_light FROM sobriety_trackers WHERE user_id = $1`, userID).Scan(&code)
+	if err != nil {
+		// Sin tracker no hay nada que comparar: verde es el punto de partida.
+		if httpx.IsNotFound(err) {
+			return risk.Green, nil
+		}
+		return risk.Green, err
+	}
+	return risk.Parse(code), nil
+}
+
 func (s *Service) List(ctx context.Context, userID string, limit int) ([]Entry, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT id, status, reason, trigger_level, suggested_actions, created_at

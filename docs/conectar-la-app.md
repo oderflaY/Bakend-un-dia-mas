@@ -78,9 +78,27 @@ lea los datos de otro cambiando un campo.
 
 ### Registrarse
 
+Lo mínimo son correo y contraseña (8 caracteres o más):
+
 ```
 POST /v1/auth/register
 {"email":"ana@correo.mx","password":"12345678","displayName":"Ana"}
+```
+
+Y si tu pantalla de alta ya pregunta de qué se está recuperando la persona,
+mándalo aquí mismo. **Todo esto es opcional**, se puede completar después:
+
+```
+POST /v1/auth/register
+{
+  "email":"ana@correo.mx",
+  "password":"12345678",
+  "displayName":"Ana",
+  "adicciones":["alcohol","tabaco"],
+  "adiccionPrincipal":"alcohol",
+  "consumoDesde":"2015-03-01",
+  "enTratamiento":true
+}
 ```
 
 Responde:
@@ -90,7 +108,14 @@ Responde:
   "accessToken": "eyJhbGciOi...",
   "refreshToken": "kJ8s2...",
   "expiresIn": 900,
-  "user": {"id":"...","email":"ana@correo.mx","displayName":"Ana","role":"patient"}
+  "user": {
+    "id": "...", "email": "ana@correo.mx", "displayName": "Ana", "role": "patient",
+    "adicciones": ["alcohol", "tabaco"],
+    "adiccionPrincipal": "alcohol",
+    "consumoDesde": "2015-03-01",
+    "enTratamiento": true,
+    "onboardingCompleto": true
+  }
 }
 ```
 
@@ -101,7 +126,44 @@ POST /v1/auth/login
 {"email":"ana@correo.mx","password":"12345678"}
 ```
 
-Responde lo mismo.
+Responde **lo mismo**, con el `user` completo. Por eso al entrar ya sabes si
+enseñar el onboarding o ir directo al inicio: mira `onboardingCompleto`. No hace
+falta llamar a `GET /v1/users/me` para eso.
+
+### El perfil de recuperación
+
+| Campo | Qué es | Reglas |
+|---|---|---|
+| `adicciones` | lista, porque muchas personas tienen más de una | cada valor del catálogo de abajo |
+| `adiccionPrincipal` | la que manda: es de la que se cuenta la racha y el ahorro | tiene que estar en `adicciones` |
+| `consumoDesde` | desde cuándo consume | `YYYY-MM-DD`, no futuro |
+| `enTratamiento` | si ya lleva terapia o grupo | `true` / `false` |
+| `onboardingCompleto` | te lo calcula el servidor | hay `adiccionPrincipal` |
+
+Catálogo — usa estos códigos exactos:
+
+```
+alcohol · tabaco · cannabis · cocaina · metanfetamina
+opioides · benzodiacepinas · inhalantes · juego · otra
+```
+
+Cuatro cosas prácticas:
+
+- **`consumoDesde` no es la fecha de sobriedad.** La fecha desde la que lleva sin
+  consumir es `startDate` y se manda a `PATCH /v1/tracker`. Confundirlas hace que
+  el contador de la pantalla de inicio marque diez años.
+- Si mandas **una sola** adicción y no mandas `adiccionPrincipal`, esa se toma
+  como principal. No tienes que repetirla.
+- Se aceptan sinónimos al escribir (`cerveza`, `nicotina`, `vape`, `marihuana`,
+  `cristal`, `apuestas`…), pero **el servidor siempre te devuelve el código
+  canónico**. Si mandas `"nicotina"` recibes `"tabaco"`. Guarda lo que te
+  devuelve, no lo que mandaste.
+- Un tipo que no existe es un 400 con el valor dentro del mensaje:
+  `{"error":"invalid-argument","message":"tipo de adicción desconocido: chela"}`.
+
+Para completarlo o cambiarlo después, los mismos campos van a
+`PATCH /v1/users/me`. Si quitas de la lista la que era principal, el servidor
+elige otra en vez de fallarte.
 
 ### Guardar los dos tokens
 
@@ -148,14 +210,22 @@ Invalida todos los refresh tokens de esa cuenta, en todos los dispositivos.
 | Historial de check-ins | `GET /v1/check-ins?limit=20` |
 | Semáforo (guardar evaluación) | `POST /v1/traffic-light` |
 | Semáforo (estado e historial) | `GET /v1/traffic-light` |
-| Diario | `POST` / `GET` / `DELETE /v1/journal` |
-| Ánimo | `POST` / `GET /v1/mood-logs` |
+| Diario (la respuesta trae el análisis, §5 bis) | `POST` / `GET` / `DELETE /v1/journal` |
+| Ánimo (igual que el diario) | `POST` / `GET /v1/mood-logs` |
+| Avisar antes de guardar, sin efectos | `POST /v1/analysis/text` |
 | Gráficas y tendencias | `GET /v1/stats/risk-trends?days=30` |
 | Chat con el asistente | `POST /v1/ai/chat` |
 | Historial del chat | `GET /v1/ai/messages` |
+| Diagnóstico del RAG (solo desarrollo) | `POST /v1/ai/retrieve` |
 | Bandeja de alertas | `GET /v1/alerts` |
 | Marcar alerta atendida | `PATCH /v1/alerts/{id}` |
+| Onboarding (tipo de adicción, §4) | `POST /v1/auth/register` o `PATCH /v1/users/me` |
 | Perfil | `GET` / `PATCH /v1/users/me` |
+| Borrar mi cuenta | `DELETE /v1/users/me` con `{password}` |
+| Muro de comunidad | `GET /v1/community/stories?sort=` |
+| Publicar historia | `POST /v1/community/stories` |
+| Mi alias del muro | `GET` / `PUT /v1/community/me` |
+| «Me ayudó» · Reportar · No ver a esta persona | `PUT …/useful` · `POST …/reports` · `POST …/block-author` |
 | Contactos de emergencia | `PUT /v1/users/me/emergency-contacts` |
 | Recordatorio diario | `GET` / `PUT /v1/reminders` |
 | Mi terapeuta | `GET` / `POST /v1/me/therapists` |
@@ -163,6 +233,72 @@ Invalida todos los refresh tokens de esa cuenta, en todos los dispositivos.
 
 La lista completa, con los campos de cada una, está en el
 [README](../README.md#rutas).
+
+---
+
+## 5 bis. El diario te contesta
+
+Cuando guardas una entrada de diario o un ánimo, el servidor **analiza el texto y
+te devuelve el resultado en la misma respuesta**. No hace falta volver a pedir el
+semáforo ni esperar el evento SSE.
+
+```
+POST /v1/journal
+{"content":"Tengo muchas ganas de fumar y estoy solo en la casa"}
+```
+
+```json
+{
+  "id": "…",
+  "content": "…",
+  "createdAt": "2026-08-04T21:14:00Z",
+  "analisis": {
+    "nivel": "AMARILLO",
+    "semaforo": "AMARILLO",
+    "subioElSemaforo": true,
+    "score": 7.5,
+    "categorias": ["antojo", "intencion"],
+    "resumen": "antojo, intencion",
+    "acciones": ["Espera 15 minutos antes de decidir: el antojo baja solo"],
+    "apoyo": [
+      {
+        "id": "antojo-ola",
+        "titulo": "El antojo sube y baja solo",
+        "texto": "Un antojo no crece para siempre…",
+        "fuente": "Marlatt y Gordon, prevención de recaídas (urge surfing)"
+      }
+    ]
+  }
+}
+```
+
+**Lo que tienes que entender de aquí son dos campos que parecen el mismo y no lo son:**
+
+- `nivel` es lo que dice **ese texto** que acabas de mandar.
+- `semaforo` es **cómo quedó la persona**.
+
+Son distintos cuando el análisis no sube nada. Si alguien está en rojo y escribe
+un día tranquilo, recibes `nivel: "VERDE"` y `semaforo: "ROJO"`: el análisis solo
+puede subir el semáforo, nunca bajarlo. Para bajarlo hace falta un check-in, que
+es un acto consciente de la persona. **Pinta `semaforo`, no `nivel`.**
+
+`subioElSemaforo` te dice si este texto cambió algo; sirve para decidir si animas
+la transición en pantalla o no dices nada.
+
+`apoyo` son hasta tres tarjetas de material de apoyo que puedes mostrar
+directamente: ya vienen elegidas para el nivel de la persona. Si no hay nada
+relevante, llega vacío — no inventes contenido para rellenar.
+
+`semaforo` puede llegar en `null` si el servidor no pudo leer el estado vigente.
+En ese caso muestra el resto del análisis y deja el semáforo como lo tenías.
+
+Mismo formato en `POST /v1/mood-logs`. Y si quieres avisar **antes** de guardar
+("esto que escribiste va a poner tu semáforo en amarillo"), manda el texto a
+`POST /v1/analysis/text`: responde igual pero no guarda nada y `semaforo` viene
+siempre en `null`.
+
+El texto del diario **no sale del servidor**: se analiza ahí mismo y ni el
+terapeuta ni Gemini lo ven nunca.
 
 ---
 
@@ -190,6 +326,135 @@ Respuestas que hay que manejar:
 
 Si el servidor arranca sin `GEMINI_API_KEY`, estas rutas **no existen** y
 responden 404. El resto del backend funciona igual.
+
+### El material de apoyo (RAG)
+
+Antes de responder, el servidor busca en un corpus propio los pasajes que tengan
+que ver con lo que la persona escribió —técnicas para el antojo, qué hacer tras
+una recaída, líneas de ayuda— y se los pasa al modelo. La app no hace nada para
+esto: es transparente. Lo único que cambia es que el asistente ya no inventa
+números de teléfono ni técnicas.
+
+La búsqueda mezcla dos cosas: coincidencia de palabras (siempre disponible, en el
+proceso) y similitud de significado (con embeddings de Gemini). Si los embeddings
+fallan, la búsqueda sigue funcionando con lo primero y el chat responde igual.
+
+Para depurar hay una ruta que enseña qué se habría recuperado, sin llamar al
+modelo ni guardar nada:
+
+```
+POST /v1/ai/retrieve
+{"query":"tengo muchas ganas de fumar"}
+```
+
+Devuelve los pasajes con su puntuación (`score`, `semantico`, `lexico`,
+`categorias`). Sirve para afinar el corpus; la app no necesita llamarla.
+
+---
+
+## 6 bis. El muro de comunidad
+
+Ocho rutas, todas con Bearer. La especificación completa —tablas, validaciones y
+cada respuesta— está en [backend-comunidad.md](backend-comunidad.md); aquí va lo
+que necesitas para conectarlo.
+
+### Antes de publicar: alias y elegibilidad
+
+```
+GET /v1/community/me
+→ {"alias":"Ana R","diasRacha":47,"elegible":true,"faltanDias":0,"misHistorias":1}
+```
+
+`alias` vacío = todavía no eligió uno; mándalo con `PUT /v1/community/me
+{"alias":"Ana R"}`. **Hacen falta 30 días de racha para publicar**: si
+`elegible` es `false`, `faltanDias` te dice cuántos quedan y con eso pintas el
+estado vacío en vez de dejar que intente y falle.
+
+Reglas del alias: 3–24 caracteres, letras (con acentos), números, espacios, `-` y
+`_`. Sin arrobas ni puntos. `409 alias-taken` si ya es de alguien.
+
+### El muro
+
+```
+GET /v1/community/stories?sort=racha&limit=20
+GET /v1/community/stories?sort=racha&cursor=MTMxMHwxYzJk…
+```
+
+`sort`: `racha` («Más tiempo», por defecto) · `recientes` · `utiles`.
+
+```json
+{"items":[{"id":"…","alias":"Beto","diasRacha":1310,"titulo":"…","cuerpo":"…",
+           "objetivo":"…","estado":"PUBLICADA","utiles":5,
+           "meAyudo":false,"esMia":false,"createdAt":"…"}],
+ "siguienteCursor":"MTMxMHwxYzJk…"}
+```
+
+**Pagina con `siguienteCursor`, no con números de página.** Guárdalo tal cual y
+devuélvelo en la siguiente petición; cuando no venga, llegaste al final. Es
+opaco: no lo construyas ni lo interpretes. Y **pertenece al orden con el que
+pediste**: si el usuario cambia de pestaña, empieza de cero sin cursor.
+
+`diasRacha` puede ser `null`: esa persona eligió no mostrar su racha. No pintes
+"0 días", pinta la tarjeta sin ese dato. En el orden por racha esas historias van
+al final.
+
+`esMia` te dice cuáles llevan el menú de borrar en vez del de reportar. **No hay
+ningún id de usuario en la respuesta, ni el tuyo ni el de nadie**: solo el alias.
+
+### Publicar
+
+```
+POST /v1/community/stories
+{"titulo":"…","cuerpo":"…","objetivo":"un día más","compartirRacha":true}
+```
+
+`cuerpo` entre 80 y 4000 caracteres (pon el contador en la pantalla), `titulo`
+≤ 120, `objetivo` ≤ 60 y opcional. `compartirRacha: false` publica sin el número.
+
+La respuesta es la historia **más un array `avisos`**:
+
+```json
+{"id":"…","alias":"Ana R","…":"…",
+ "avisos":[{"tipo":"correo","mensaje":"Dejaste un correo visible. El muro es público…"}]}
+```
+
+Los avisos llegan **con la historia ya publicada**: detectan correos, teléfonos y
+enlaces, y avisan sin bloquear. Enséñalos después de guardar, con la opción de
+borrarla. La decisión de dejar su contacto es de quien escribe; lo que no puede
+es que se le escape sin enterarse.
+
+Lo que **sí** bloquea:
+
+| Código | Qué pasó | Qué enseñar |
+|---|---|---|
+| `422 unsafe-content` | dosis, precios o dónde conseguir | el `message` del servidor, tal cual |
+| `403 not-eligible` | menos de 30 días | cuántos le faltan |
+| `409 alias-required` | no ha elegido alias | mándalo al `PUT /v1/community/me` |
+| `400 invalid-argument` | tamaños | el contador ya debería haberlo evitado |
+
+El `422` trae `motivo` (`suministro` · `dosis` · `precio`) por si quieres un
+texto propio, pero el `message` ya viene escrito para leerse tal cual.
+
+### Moderación desde la app
+
+```
+PUT    /v1/community/stories/{id}/useful        {"util":true}   → {"utiles":6,"meAyudo":true}
+POST   /v1/community/stories/{id}/reports       {"motivo":"…","detalle":"…"}
+POST   /v1/community/stories/{id}/block-author
+DELETE /v1/community/stories/{id}
+```
+
+`useful` es idempotente: puedes reintentar sin red sin miedo a contar doble.
+
+`motivo` ∈ `contenido-peligroso · datos-personales · acoso · spam · otro`. La
+respuesta trae `enRevision`: con tres reportes de personas distintas la historia
+se retira sola del muro. **No te decimos cuántos reportes lleva** — eso le diría
+a cualquiera lo cerca que está de tumbar una historia.
+
+`block-author` esconde todo lo de esa persona, para siempre y aunque cambie de
+alias. No hay pantalla para deshacerlo todavía.
+
+Una historia ajena responde `404` al borrarla, igual que una que no existe.
 
 ---
 

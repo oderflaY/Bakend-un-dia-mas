@@ -7,6 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/addiction"
 )
 
 var (
@@ -24,14 +26,56 @@ type User struct {
 	DisplayName  string
 	Role         Role
 	PasswordHash string
+
+	// Perfil de recuperación. Viaja en la respuesta de register, login y refresh
+	// para que la app sepa, sin una segunda llamada, si tiene que enseñar el
+	// onboarding o ir directo al inicio.
+	Adicciones    []addiction.Type
+	Principal     addiction.Type
+	ConsumoDesde  *time.Time
+	EnTratamiento bool
 }
 
-func (s *Store) CreateUser(ctx context.Context, email, hash, displayName string) (User, error) {
-	u := User{Email: email, DisplayName: displayName, Role: RolePatient}
+// OnboardingCompleto es la pregunta que hace la app al abrir. Basta con la
+// adicción principal: el resto del perfil se puede completar después, pero sin
+// ella no hay nada que contar ni material que elegir.
+func (u User) OnboardingCompleto() bool { return u.Principal != "" }
+
+// NewUser son los datos de alta. Es un struct y no seis parámetros porque el
+// perfil de recuperación va a seguir creciendo y una firma de nueve argumentos
+// posicionales es un error de orden esperando a ocurrir.
+type NewUser struct {
+	Email         string
+	Hash          string
+	DisplayName   string
+	Adicciones    []addiction.Type
+	Principal     addiction.Type
+	ConsumoDesde  *time.Time
+	EnTratamiento bool
+}
+
+func (s *Store) CreateUser(ctx context.Context, in NewUser) (User, error) {
+	u := User{
+		Email:         in.Email,
+		DisplayName:   in.DisplayName,
+		Role:          RolePatient,
+		Adicciones:    in.Adicciones,
+		Principal:     in.Principal,
+		ConsumoDesde:  in.ConsumoDesde,
+		EnTratamiento: in.EnTratamiento,
+	}
+	if u.Adicciones == nil {
+		u.Adicciones = []addiction.Type{}
+	}
+
 	err := s.db.QueryRow(ctx, `
-		INSERT INTO users (email, password_hash, display_name)
-		VALUES (lower($1), $2, $3)
-		RETURNING id`, email, hash, displayName).Scan(&u.ID)
+		INSERT INTO users (email, password_hash, display_name,
+		                   adicciones, adiccion_principal, consumo_desde, en_tratamiento)
+		VALUES (lower($1), $2, $3, $4, $5, $6, $7)
+		RETURNING id`,
+		in.Email, in.Hash, in.DisplayName,
+		addiction.Strings(u.Adicciones), string(in.Principal), in.ConsumoDesde, in.EnTratamiento,
+	).Scan(&u.ID)
 	if isUniqueViolation(err) {
 		return User{}, ErrEmailTaken
 	}
@@ -46,13 +90,19 @@ func (s *Store) CreateUser(ctx context.Context, email, hash, displayName string)
 
 func (s *Store) UserByEmail(ctx context.Context, email string) (User, error) {
 	var u User
+	var adicciones []string
+	var principal string
 	err := s.db.QueryRow(ctx, `
-		SELECT id, email, display_name, role, password_hash
+		SELECT id, email, display_name, role, password_hash,
+		       adicciones, adiccion_principal, consumo_desde, en_tratamiento
 		FROM users WHERE email = lower($1)`, email).
-		Scan(&u.ID, &u.Email, &u.DisplayName, &u.Role, &u.PasswordHash)
+		Scan(&u.ID, &u.Email, &u.DisplayName, &u.Role, &u.PasswordHash,
+			&adicciones, &principal, &u.ConsumoDesde, &u.EnTratamiento)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrInvalidLogin
 	}
+	u.Adicciones = addiction.Types(adicciones)
+	u.Principal = addiction.Type(principal)
 	return u, err
 }
 
@@ -72,18 +122,26 @@ func (s *Store) SaveRefreshToken(ctx context.Context, hash, userID string, expir
 // sentencia: dos peticiones simultáneas con el mismo token no pueden ganar ambas.
 func (s *Store) ConsumeRefreshToken(ctx context.Context, hash string) (User, error) {
 	var u User
+	var adicciones []string
+	var principal string
 	err := s.db.QueryRow(ctx, `
 		WITH consumed AS (
 			UPDATE refresh_tokens SET revoked_at = now()
 			WHERE token_hash = $1 AND revoked_at IS NULL AND expires_at > now()
 			RETURNING user_id
 		)
-		SELECT u.id, u.email, u.display_name, u.role
+		SELECT u.id, u.email, u.display_name, u.role,
+		       u.adicciones, u.adiccion_principal, u.consumo_desde, u.en_tratamiento
 		FROM consumed JOIN users u ON u.id = consumed.user_id`, hash).
-		Scan(&u.ID, &u.Email, &u.DisplayName, &u.Role)
+		Scan(&u.ID, &u.Email, &u.DisplayName, &u.Role,
+			&adicciones, &principal, &u.ConsumoDesde, &u.EnTratamiento)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrInvalidLogin
 	}
+	// El perfil también viaja en el refresh: si la persona completó su
+	// onboarding en otro dispositivo, este se entera al renovar el token.
+	u.Adicciones = addiction.Types(adicciones)
+	u.Principal = addiction.Type(principal)
 	return u, err
 }
 

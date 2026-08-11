@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "umbrales": { "amarillo": 3.0, "rojo": 8.0 },
+
+  "negadores": [
+    "no", "nunca", "jamas", "sin", "ni", "tampoco", "deje", "dejo",
+    "evite", "resisti", "aguante", "supere", "logre", "menos"
+  ],
+
+  "categorias": [
+    {
+      "nombre": "ideacion",
+      "peso": 8.0,
+      "critica": true,
+      "accion": "Habla con tu contacto de confianza ahora mismo",
+      "terminos": [
+        "me quiero morir", "no quiero vivir", "quitarme la vida",
+        "acabar con todo", "suicidio", "suicidarme", "ya no quiero seguir"
+      ]
+    },
+    {
+      "nombre": "recaida",
+      "peso": 8.0,
+      "critica": true,
+      "accion": "Registra la recaída: la racha se reinicia, el récord se conserva",
+      "terminos": [
+        "ya recai", "recai", "volvi a consumir", "volvi a beber", "volvi a fumar",
+        "volvi a caer", "rompi la racha", "rompi mi racha", "perdi el control",
+        "volvi a empezar", "ya fume", "ya bebi", "ya tome", "consumi anoche"
+      ]
+    },
+    {
+      "nombre": "intencion",
+      "peso": 5.0,
+      "critica": true,
+      "accion": "Espera 15 minutos antes de decidir: el antojo baja solo",
+      "terminos": [
+        "quiero consumir", "quiero fumar", "quiero beber", "quiero tomar",
+        "quiero drogarme", "quiero vapear", "necesito un cigarro",
+        "necesito alcohol", "necesito consumir", "necesito beber",
+        "voy a tomar", "voy a fumar", "voy a beber",
+        "solo una vez", "solo una copa", "solo un cigarro", "solo hoy",
+        "no pasa nada", "manana empiezo", "manana dejo", "manana lo dejo",
+        "una sola copa", "un solo cigarro"
+      ]
+    },
+    {
+      "nombre": "senales",
+      "peso": 3.0,
+      "critica": true,
+      "accion": "Avisa a alguien de tu red antes de moverte de donde estás",
+      "terminos": [
+        "buscar droga", "buscar alcohol", "conseguir alcohol", "conseguir droga",
+        "contactar dealer", "dealer", "buscar vape", "buscar marihuana",
+        "aislamiento", "aislarme", "encerrarme", "fantasear",
+        "recordar el consumo", "pensamientos repetitivos", "impulsividad"
+      ]
+    },
+    {
+      "nombre": "antojo",
+      "peso": 2.5,
+      "critica": false,
+      "accion": "Respira 4-7-8 durante cinco minutos",
+      "terminos": [
+        "antojo", "craving", "tentacion", "impulso", "urgencia", "ansias",
+        "obsesion", "compulsion", "no aguanto", "no aguanto mas",
+        "ganas de tomar", "ganas de fumar", "ganas de beber", "ganas de consumir",
+        "muchas ganas", "me muero de ganas"
+      ]
+    },
+    {
+      "nombre": "abstinencia",
+      "peso": 2.0,
+      "critica": false,
+      "accion": "Toma agua, come algo y descansa: el cuerpo está pasando la cuenta",
+      "terminos": [
+        "abstinencia", "sindrome de abstinencia", "temblor", "temblores",
+        "sudor", "sudores", "sudando frio", "insomnio", "no puedo dormir",
+        "irritabilidad", "malestar", "nervios", "nauseas"
+      ]
+    },
+    {
+      "nombre": "pensamientos",
+      "peso": 2.0,
+      "critica": false,
+      "accion": "Escribe qué pasó justo antes de este pensamiento",
+      "terminos": [
+        "no puedo", "no sirvo", "ya falle", "nadie me entiende",
+        "no vale la pena", "quiero rendirme", "no tengo fuerzas",
+        "estoy cansado de esto", "para que intento", "soy un fracaso"
+      ]
+    },
+    {
+      "nombre": "consumo",
+      "peso": 1.5,
+      "critica": false,
+      "accion": "Aléjate del lugar donde estás",
+      "terminos": [
+        "fumar", "fumando", "vapear", "vapeando", "beber", "bebiendo",
+        "emborrachar", "emborracharme", "borracho", "drogarme", "drogado",
+        "inyectar", "esnifar", "aspirar",
+        "dar un trago", "dar una copa", "dar un jalon", "dar una fumada",
+        "dar un toque", "echarme unas", "unas chelas", "unos tragos"
+      ]
+    },
+    {
+      "nombre": "consecuencias",
+      "peso": 1.5,
+      "critica": false,
+      "accion": "Anota el costo real: sirve para el próximo antojo",
+      "terminos": [
+        "resaca", "cruda", "sobredosis", "hospital", "urgencias", "accidente",
+        "arrepentimiento", "problemas familiares", "me corrieron", "despido",
+        "deudas", "laguna mental"
+      ]
+    },
+    {
+      "nombre": "sustancias",
+      "peso": 1.0,
+      "critica": false,
+      "accion": "Quita de tu vista lo que te lo recuerde",
+      "terminos": [
+        "alcohol", "cerveza", "chela", "chelas", "whisky", "vodka", "tequila",
+        "ron", "mezcal", "brandy", "ginebra", "licor", "copa de vino",
+        "botella de vino", "vino tinto",
+        "cigarro", "cigarros", "tabaco", "nicotina", "vape", "vaper",
+        "cigarro electronico",
+        "cannabis", "marihuana", "mota", "weed", "porro", "joint", "hachis",
+        "thc", "cocaina", "crack", "heroina", "opioides", "opiaceos",
+        "fentanilo", "morfina", "oxicodona", "tramadol", "codeina",
+        "anfetaminas", "metanfetamina", "extasis", "mdma", "lsd",
+        "psilocibina", "ketamina", "ghb", "inhalantes", "solventes"
+      ]
+    },
+    {
+      "nombre": "emociones",
+      "peso": 1.0,
+      "critica": false,
+      "accion": "Nombrar lo que sientes ya es parte del trabajo",
+      "terminos": [
+        "tristeza", "triste", "depresion", "deprimido", "ansiedad", "ansioso",
+        "miedo", "enojo", "enojado", "frustracion", "frustrado", "culpa",
+        "culpable", "verguenza", "soledad", "me siento solo", "vacio",
+        "estres", "estresado", "agotamiento", "agotado", "desanimo",
+        "aburrimiento", "aburrido", "desesperacion", "desesperado", "harto"
+      ]
+    },
+    {
+      "nombre": "detonantes",
+      "peso": 0.75,
+      "critica": false,
+      "accion": "Ten un plan de salida antes de entrar",
+      "terminos": [
+        "fiesta", "bar", "antro", "cantina", "reunion", "presion social",
+        "pelea", "discusion", "ruptura", "divorcio", "fin de semana",
+        "me insistieron", "me ofrecieron"
+      ]
+    },
+
+    {
+      "nombre": "recuperacion",
+      "peso": -2.0,
+      "critica": false,
+      "accion": "",
+      "terminos": [
+        "sobrio", "sobria", "sobriedad", "limpio", "recuperacion",
+        "rehabilitacion", "tratamiento", "terapia", "psicologo", "psiquiatra",
+        "grupo de apoyo", "junta", "padrino", "apoyo", "progreso",
+        "disciplina", "orgulloso", "lo logre", "dije que no", "resisti"
+      ]
+    },
+    {
+      "nombre": "prevencion",
+      "peso": -1.5,
+      "critica": false,
+      "accion": "",
+      "terminos": [
+        "respirar", "respire", "meditar", "meditacion", "caminar", "camine",
+        "ejercicio", "correr", "corri", "leer", "escribir", "descansar",
+        "dormi bien", "beber agua", "relajacion", "mindfulness", "gratitud",
+        "me siento bien", "estoy bien", "tranquilo", "en paz", "feliz",
+        "hable con", "llame a", "pedi ayuda"
+      ]
+    }
+  ]
+}

@@ -23,29 +23,69 @@ const (
 )
 
 type Handler struct {
-	db       *pgxpool.Pool
-	client   Client
-	checkIns *checkins.Store
-	alerts   *alerts.Service
-	issuer   *auth.TokenIssuer
-	limiter  *rateLimiter
+	db        *pgxpool.Pool
+	client    Client
+	checkIns  *checkins.Store
+	alerts    *alerts.Service
+	issuer    *auth.TokenIssuer
+	retriever Retriever // puede ser nil: ver el comentario de Retriever
+	limiter   *rateLimiter
 }
 
 func NewHandler(db *pgxpool.Pool, client Client, checkIns *checkins.Store,
-	alertSvc *alerts.Service, issuer *auth.TokenIssuer) *Handler {
+	alertSvc *alerts.Service, issuer *auth.TokenIssuer, retriever Retriever) *Handler {
 	return &Handler{
-		db:       db,
-		client:   client,
-		checkIns: checkIns,
-		alerts:   alertSvc,
-		issuer:   issuer,
-		limiter:  newRateLimiter(20, time.Minute),
+		db:        db,
+		client:    client,
+		checkIns:  checkIns,
+		alerts:    alertSvc,
+		issuer:    issuer,
+		retriever: retriever,
+		limiter:   newRateLimiter(20, time.Minute),
 	}
 }
 
 func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.Handle("POST /v1/ai/chat", h.issuer.Middleware(http.HandlerFunc(h.chat)))
 	mux.Handle("GET /v1/ai/messages", h.issuer.Middleware(http.HandlerFunc(h.messages)))
+	mux.Handle("POST /v1/ai/retrieve", h.issuer.Middleware(http.HandlerFunc(h.retrieve)))
+}
+
+// retrieve es la ruta de diagnóstico del RAG: devuelve qué pasajes se habrían
+// inyectado y con qué puntuación, sin llamar al modelo ni guardar nada. Es lo
+// que permite ajustar pesos y corpus mirando consultas reales; sin ella, el
+// ranking solo se puede evaluar leyendo respuestas del chat, que es justo donde
+// no se distingue un buen retrieval de un buen modelo tapando un mal retrieval.
+func (h *Handler) retrieve(w http.ResponseWriter, r *http.Request) {
+	id := auth.MustFrom(r.Context())
+
+	var in struct {
+		Query string `json:"query"`
+	}
+	if err := httpx.Decode(w, r, &in); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "invalid-argument", err.Error())
+		return
+	}
+	if in.Query == "" {
+		httpx.Error(w, http.StatusBadRequest, "invalid-argument", "query vacía")
+		return
+	}
+	searcher, ok := h.retriever.(Searcher)
+	if !ok || searcher == nil {
+		httpx.Error(w, http.StatusServiceUnavailable, "rag-unavailable", "el recuperador no está disponible")
+		return
+	}
+
+	// El nivel sale del check-in, igual que en el chat: la app no elige contra
+	// qué semáforo se filtra el material.
+	level := risk.Green
+	if latest, ok, err := h.checkIns.Latest(r.Context(), id.UserID); err == nil && ok {
+		level = latest.RiskLevel
+	}
+	httpx.JSON(w, http.StatusOK, map[string]any{
+		"riskLevel": level,
+		"items":     searcher.Retrieve(r.Context(), in.Query, level),
+	})
 }
 
 func (h *Handler) chat(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +131,7 @@ func (h *Handler) chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := RunTurn(r.Context(), h.client, h, id.UserID, level, history, in.Prompt)
+	res, err := RunTurn(r.Context(), h.client, h, h.retriever, id.UserID, level, history, in.Prompt)
 	if err != nil {
 		slog.Error("fallo el turno del agente", "userId", id.UserID, "err", err)
 		httpx.Error(w, http.StatusBadGateway, "ai-unavailable", "el asistente no está disponible ahora mismo")

@@ -32,7 +32,7 @@ make run                       # aplica migraciones y escucha en :8080
 
 Las migraciones van embebidas en el binario (`internal/db/migrations/*.sql`) y se
 aplican solas al arrancar, una por transacción, registradas en `schema_migrations`.
-Para añadir una nueva, crea `0002_loquesea.sql`: el orden es alfabético.
+Para añadir una nueva, crea `0005_loquesea.sql`: el orden es alfabético.
 
 ```sh
 make test    # no necesita base de datos
@@ -44,12 +44,13 @@ make build   # binario en bin/api
 | Método | Ruta | Auth | Nota |
 |---|---|---|---|
 | `GET`  | `/healthz` | — | incluye ping a la base |
-| `POST` | `/v1/auth/register` | — | siempre crea rol `patient` |
+| `POST` | `/v1/auth/register` | — | siempre crea rol `patient`; acepta el perfil de recuperación |
 | `POST` | `/v1/auth/login` | — | |
 | `POST` | `/v1/auth/refresh` | — | rota el par de tokens |
 | `POST` | `/v1/auth/logout` | Bearer | revoca todos los refresh del usuario |
-| `GET`  | `/v1/users/me` | Bearer | perfil + contactos de emergencia |
-| `PATCH`| `/v1/users/me` | Bearer | `displayName`, `porQuePersonal` — nunca `role` |
+| `GET`  | `/v1/users/me` | Bearer | perfil + adicciones + contactos de emergencia |
+| `PATCH`| `/v1/users/me` | Bearer | `displayName`, `porQuePersonal`, `adicciones`, `adiccionPrincipal`, `consumoDesde`, `enTratamiento` — nunca `role` |
+| `DELETE`| `/v1/users/me` | Bearer | borra la cuenta; exige `{password}`; cascada total |
 | `PUT`  | `/v1/users/me/emergency-contacts` | Bearer | el primero es el de confianza |
 | `GET`  | `/v1/tracker` | Bearer | racha y ahorro calculados en el servidor |
 | `PATCH`| `/v1/tracker` | Bearer | `startDate`, `dailySavingsRate`, `currency` |
@@ -61,11 +62,11 @@ make build   # binario en bin/api
 | `GET`  | `/v1/events` | Bearer | **SSE**, sustituye a FCM |
 | `GET`  | `/v1/alerts?limit=20` | Bearer | |
 | `PATCH`| `/v1/alerts/{id}` | Bearer | `{"handled": true}` |
-| `POST` | `/v1/journal` | Bearer | |
+| `POST` | `/v1/journal` | Bearer | la respuesta trae el análisis del texto |
 | `GET`  | `/v1/journal?limit=20` | Bearer | |
 | `GET`  | `/v1/journal/{id}` | Bearer | |
 | `DELETE`| `/v1/journal/{id}` | Bearer | el diario sí se puede retirar |
-| `POST` | `/v1/mood-logs` | Bearer | la etiqueta se normaliza a mayúsculas |
+| `POST` | `/v1/mood-logs` | Bearer | se normaliza a mayúsculas; responde con análisis |
 | `GET`  | `/v1/mood-logs?limit=30` | Bearer | |
 | `POST` | `/v1/traffic-light` | Bearer | registra el semáforo; en rojo levanta alerta |
 | `GET`  | `/v1/traffic-light?limit=20` | Bearer | estado actual + historial |
@@ -76,8 +77,18 @@ make build   # binario en bin/api
 | `POST` | `/v1/me/therapists` | Bearer | `{email}` — el paciente concede el acceso |
 | `DELETE`| `/v1/me/therapists/{id}` | Bearer | y lo retira |
 | `GET`  | `/v1/me/sessions` | Bearer | tus sesiones, en solo lectura |
+| `GET`  | `/v1/community/me` | Bearer | alias y elegibilidad del muro |
+| `PUT`  | `/v1/community/me` | Bearer | `{alias}` — único, sin distinguir mayúsculas |
+| `GET`  | `/v1/community/stories?sort=&cursor=` | Bearer | muro; `racha`·`recientes`·`utiles` |
+| `POST` | `/v1/community/stories` | Bearer | 30 días de racha; filtro de contenido |
+| `DELETE`| `/v1/community/stories/{id}` | Bearer | solo la propia; 404 si es ajena |
+| `PUT`  | `/v1/community/stories/{id}/useful` | Bearer | `{util}` — idempotente |
+| `POST` | `/v1/community/stories/{id}/reports` | Bearer | 3 reportes distintos → EN_REVISION |
+| `POST` | `/v1/community/stories/{id}/block-author` | Bearer | esconde todo lo de esa persona |
+| `POST` | `/v1/analysis/text` | Bearer | analiza un texto sin guardar nada |
 | `POST` | `/v1/ai/chat` | Bearer | |
 | `GET`  | `/v1/ai/messages?limit=50` | Bearer | |
+| `POST` | `/v1/ai/retrieve` | Bearer | diagnóstico del RAG; no llama al modelo |
 
 Y la vista clínica, que además del token exige rol `therapist` y vínculo con el
 paciente. Sin las dos cosas, todo responde 404:
@@ -101,6 +112,19 @@ vínculo: ninguna ruta los expone.
 
 Para conectar la app contra estas rutas —dirección del servidor, manejo del
 token, errores y los fallos típicos— está [docs/conectar-la-app.md](docs/conectar-la-app.md).
+
+La especificación completa del sistema —modelo de datos, pipeline de riesgo,
+RAG, invariantes y lo que deliberadamente no existe— está en
+[docs/sistema-para-modelos.md](docs/sistema-para-modelos.md). Está escrita para
+que otro modelo pueda razonar sobre el backend sin leerlo entero. El muro de
+comunidad tiene la suya en
+[docs/backend-comunidad.md](docs/backend-comunidad.md).
+
+Para probar con datos reales hay dos cuentas de demostración:
+
+```sh
+make seed    # ana@undiamas.mx y roberto@undiamas.mx, contraseña UnDiaMas2026
+```
 
 Prueba rápida:
 

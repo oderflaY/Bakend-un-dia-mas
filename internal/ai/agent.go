@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/rag"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/risk"
 )
 
@@ -78,6 +79,23 @@ type ToolRunner interface {
 	Run(ctx context.Context, userID, name string, args map[string]any) (map[string]any, error)
 }
 
+// Retriever devuelve material de apoyo ya formateado para el mensaje, o "" si no
+// hay nada relevante. Lo implementa *rag.Store.
+//
+// Es una interfaz y admite nil por dos razones: sin GEMINI_API_KEY no hay
+// embeddings, y el asistente tiene que seguir conversando igual. El RAG mejora
+// las respuestas, no las habilita.
+type Retriever interface {
+	Prompt(ctx context.Context, consulta string, level risk.Level) string
+}
+
+// Searcher es la parte del recuperador que solo usa la ruta de diagnóstico. Va
+// aparte de Retriever para que el turno del agente no dependa del tipo concreto
+// de los resultados: al chat solo le importa el texto ya formateado.
+type Searcher interface {
+	Retrieve(ctx context.Context, consulta string, level risk.Level) []rag.Hit
+}
+
 type TurnResult struct {
 	Reply         string
 	SavedAlertIDs []string
@@ -99,12 +117,22 @@ func RunTurn(
 	ctx context.Context,
 	client Client,
 	runner ToolRunner,
+	retriever Retriever,
 	userID string,
 	level risk.Level,
 	history []Content,
 	prompt string,
 ) (TurnResult, error) {
-	sys := Content{Parts: []Part{{Text: systemPrompt(level)}}}
+	// El material recuperado va en la instrucción de sistema, no en el turno del
+	// usuario, y se recupera una sola vez por turno: las rondas de herramientas
+	// no vuelven a llamar a la red por lo mismo.
+	instruccion := systemPrompt(level)
+	if retriever != nil {
+		if material := retriever.Prompt(ctx, prompt, level); material != "" {
+			instruccion += "\n" + material
+		}
+	}
+	sys := Content{Parts: []Part{{Text: instruccion}}}
 	contents := append(append([]Content{}, history...), Content{
 		Role:  "user",
 		Parts: []Part{{Text: prompt}},

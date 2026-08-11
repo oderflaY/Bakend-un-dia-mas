@@ -40,7 +40,7 @@ func TestRunTurnConservaElTurnoDelModeloAntesDeLaRespuestaDeLaTool(t *testing.T)
 	}}
 	runner := &fakeRunner{}
 
-	res, err := RunTurn(context.Background(), client, runner, "u1", risk.Red, nil, "no puedo más")
+	res, err := RunTurn(context.Background(), client, runner, nil, "u1", risk.Red, nil, "no puedo más")
 	if err != nil {
 		t.Fatalf("error inesperado: %v", err)
 	}
@@ -86,7 +86,60 @@ func TestRunTurnCortaSiElModeloNoDejaDePedirTools(t *testing.T) {
 	call := Content{Role: "model", Parts: []Part{{FunctionCall: &FunctionCall{Name: "leer_historial_reciente"}}}}
 	client := &fakeClient{responses: []Content{call, call, call}}
 
-	if _, err := RunTurn(context.Background(), client, &fakeRunner{}, "u1", risk.Green, nil, "hola"); err == nil {
+	if _, err := RunTurn(context.Background(), client, &fakeRunner{}, nil, "u1", risk.Green, nil, "hola"); err == nil {
 		t.Fatal("se esperaba error por exceso de rondas")
+	}
+}
+
+// fakeRetriever no toca red ni corpus: aquí solo se comprueba dónde aterriza el
+// material, que es lo que importa a nivel de agente.
+type fakeRetriever struct {
+	material string
+	consulta string
+	level    risk.Level
+}
+
+func (f *fakeRetriever) Prompt(_ context.Context, consulta string, level risk.Level) string {
+	f.consulta, f.level = consulta, level
+	return f.material
+}
+
+func TestRunTurnMeteElMaterialEnLaInstruccionDeSistema(t *testing.T) {
+	client := &fakeClient{responses: []Content{
+		{Role: "model", Parts: []Part{{Text: "ok"}}},
+	}}
+	ret := &fakeRetriever{material: "[1] El antojo sube y baja solo"}
+
+	if _, err := RunTurn(context.Background(), client, &fakeRunner{}, ret,
+		"u1", risk.Yellow, nil, "tengo muchas ganas de fumar"); err != nil {
+		t.Fatalf("error inesperado: %v", err)
+	}
+
+	sys := client.requests[0].SystemInstruction
+	if sys == nil {
+		t.Fatal("no se mandó instrucción de sistema")
+	}
+	if !strings.Contains(sys.Parts[0].Text, ret.material) {
+		t.Error("el material recuperado no llegó a la instrucción de sistema")
+	}
+	// En el turno del usuario no: si fuera ahí, un prompt podría contradecirlo o
+	// pedirle al modelo que lo ignore.
+	user := client.requests[0].Contents[0]
+	if strings.Contains(user.Parts[0].Text, ret.material) {
+		t.Error("el material se coló en el turno del usuario")
+	}
+	if ret.consulta != "tengo muchas ganas de fumar" || ret.level != risk.Yellow {
+		t.Errorf("el recuperador recibió (%q, %v)", ret.consulta, ret.level)
+	}
+}
+
+func TestRunTurnFuncionaSinRecuperador(t *testing.T) {
+	client := &fakeClient{responses: []Content{{Role: "model", Parts: []Part{{Text: "aquí estoy"}}}}}
+	res, err := RunTurn(context.Background(), client, &fakeRunner{}, nil, "u1", risk.Green, nil, "hola")
+	if err != nil {
+		t.Fatalf("sin RAG el chat debe seguir funcionando: %v", err)
+	}
+	if res.Reply != "aquí estoy" {
+		t.Errorf("reply = %q", res.Reply)
 	}
 }

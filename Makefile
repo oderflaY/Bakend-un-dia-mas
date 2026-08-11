@@ -1,4 +1,4 @@
-.PHONY: run build test test-integration tidy db-create db-drop db-shell db-therapist
+.PHONY: run build test test-integration tidy seed db-create db-drop db-shell db-therapist
 
 run:
 	set -a; . ./.env; set +a; go run ./cmd/api
@@ -18,6 +18,12 @@ test-integration:
 
 tidy:
 	go mod tidy
+
+# Dos cuentas de demostración con racha, historias en el muro y check-ins.
+# Idempotente: vuelve a dejarlas en el mismo estado. Se niega a correr contra
+# una base que no sea local salvo --force, porque las contraseñas son públicas.
+seed:
+	set -a; . ./.env; set +a; go run ./cmd/seed
 
 # Postgres local, sin Docker. Recién inicializado el cluster, el único rol que
 # existe es 'postgres', así que hay que crear el nuestro desde ahí.

@@ -91,10 +91,19 @@ func (s *Store) Delete(ctx context.Context, userID, id string) error {
 type Handler struct {
 	store  *Store
 	issuer *auth.TokenIssuer
+	// onWrite analiza el texto recién escrito, puede subir el semáforo y
+	// devuelve el veredicto que se adjunta a la respuesta. Es opcional: sin él,
+	// el diario sigue funcionando como un diario.
+	//
+	// Devuelve `any` para que este paquete no tenga que importar el del
+	// clasificador: el diario no sabe qué es un semáforo, solo reenvía lo que le
+	// den. Quien lo cablea (cmd/api) sí lo sabe.
+	onWrite func(ctx context.Context, userID, texto string) any
 }
 
-func NewHandler(store *Store, issuer *auth.TokenIssuer) *Handler {
-	return &Handler{store: store, issuer: issuer}
+func NewHandler(store *Store, issuer *auth.TokenIssuer,
+	onWrite func(context.Context, string, string) any) *Handler {
+	return &Handler{store: store, issuer: issuer, onWrite: onWrite}
 }
 
 func (h *Handler) Routes(mux *http.ServeMux) {
@@ -129,7 +138,21 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusInternalServerError, "internal", "no se pudo guardar la entrada")
 		return
 	}
-	httpx.JSON(w, http.StatusCreated, e)
+
+	// Después de guardar, nunca antes: si el análisis fallara, la entrada ya
+	// está a salvo. Es el mismo orden que en el protocolo de emergencia.
+	var analisis any
+	if h.onWrite != nil {
+		analisis = h.onWrite(r.Context(), id.UserID, in.Content)
+	}
+
+	// La entrada se aplana en la raíz —id, content, createdAt siguen donde
+	// estaban— y el veredicto se cuelga como un campo más. Así una app que
+	// todavía no lo lee no se entera del cambio.
+	httpx.JSON(w, http.StatusCreated, struct {
+		Entry
+		Analisis any `json:"analisis,omitempty"`
+	}{e, analisis})
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {

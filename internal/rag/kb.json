@@ -1,0 +1,798 @@
+{
+  "version": 1,
+  "documentos": [
+    {
+      "id": "antojo-ola",
+      "titulo": "El antojo sube y baja solo",
+      "categorias": [
+        "antojo",
+        "intencion"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Marlatt y Gordon, prevención de recaídas (urge surfing)",
+      "sinonimos": [
+        "aguanto",
+        "alcohol",
+        "antoja",
+        "antojo",
+        "beber",
+        "cigarro",
+        "consumir",
+        "craving",
+        "fumar",
+        "ganas",
+        "impulso",
+        "necesito",
+        "quiero",
+        "tentacion",
+        "tomar",
+        "urgencia"
+      ],
+      "texto": "Un antojo no crece para siempre. Sube, llega a un punto máximo y baja, casi siempre en menos de veinte o treinta minutos, aunque mientras dura se sienta eterno. La técnica es observarlo como una ola: nombrar dónde se siente en el cuerpo, ponerle intensidad del 1 al 10 y quedarse mirándolo sin obedecerlo ni pelearse con él. Pelear con el antojo lo alarga; obedecerlo enseña al cerebro que gritando consigue lo que quiere. Solo esperarlo lo debilita cada vez que se repite."
+    },
+    {
+      "id": "retraso-quince",
+      "titulo": "Retrasar la decisión quince minutos",
+      "categorias": [
+        "antojo",
+        "intencion"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Terapia cognitivo-conductual, técnica de demora",
+      "sinonimos": [
+        "aguantar",
+        "beber",
+        "copa",
+        "dura",
+        "empiezo",
+        "esperar",
+        "fumar",
+        "hoy",
+        "manana",
+        "nada",
+        "nomas",
+        "quiero",
+        "resistir",
+        "solo",
+        "vez"
+      ],
+      "texto": "No hace falta prometer 'nunca más'; eso es demasiado grande para un momento de antojo. Basta con aplazar la decisión quince minutos y hacer algo con el cuerpo mientras: caminar, ducharse, lavar trastes, salir del lugar. Después de esos quince minutos se vuelve a decidir. Casi siempre la urgencia ya bajó. Decidir por hoy, o por la próxima hora, es más fácil de sostener que decidir para siempre."
+    },
+    {
+      "id": "halt",
+      "titulo": "HALT: hambre, enojo, soledad, cansancio",
+      "categorias": [
+        "antojo",
+        "emociones",
+        "detonantes"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Programas de doce pasos, acrónimo HALT",
+      "sinonimos": [
+        "antojo",
+        "cansado",
+        "cansancio",
+        "enojado",
+        "enojo",
+        "fastidio",
+        "fumar",
+        "ganas",
+        "hambre",
+        "harto",
+        "malhumor",
+        "soledad",
+        "solo"
+      ],
+      "texto": "Muchos antojos no son antojos: son hambre, enojo, soledad o cansancio disfrazados. Antes de tratar el impulso como si fuera un problema de voluntad, conviene revisar esas cuatro cosas y atender la que esté presente: comer algo, decir el enojo en voz alta o por escrito, escribirle a alguien, dormir. Un cuerpo con hambre y sin dormir toma decisiones que un cuerpo descansado no tomaría."
+    },
+    {
+      "id": "respiracion-cuadrada",
+      "titulo": "Respiración cuadrada para bajar la activación",
+      "categorias": [
+        "abstinencia",
+        "emociones",
+        "prevencion"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Técnicas de regulación fisiológica",
+      "sinonimos": [
+        "acelerado",
+        "angustia",
+        "ansiedad",
+        "ansioso",
+        "ataque",
+        "calmarme",
+        "nervios",
+        "nervioso",
+        "panico",
+        "respiracion",
+        "respirar",
+        "taquicardia",
+        "tranquilizarme"
+      ],
+      "texto": "Cuando la ansiedad está alta, el cuerpo va primero y el pensamiento después. Respiración cuadrada: inhalar contando cuatro, sostener cuatro, exhalar cuatro, sostener cuatro. Cinco o seis rondas. Lo importante es que la exhalación sea al menos tan larga como la inhalación, porque eso es lo que baja el pulso. No quita el problema, baja el volumen del cuerpo para poder pensar."
+    },
+    {
+      "id": "anclaje-5432",
+      "titulo": "Anclaje 5-4-3-2-1 para volver al presente",
+      "categorias": [
+        "emociones",
+        "abstinencia",
+        "prevencion"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Técnica de grounding sensorial",
+      "sinonimos": [
+        "acelerada",
+        "crisis",
+        "desesperado",
+        "disociado",
+        "grounding",
+        "irreal",
+        "mente",
+        "panico",
+        "parar",
+        "pensamientos",
+        "pensar",
+        "puedo",
+        "repetitivos"
+      ],
+      "texto": "Sirve cuando la cabeza está dando vueltas o hay una sensación de irrealidad o pánico. Nombrar en voz baja cinco cosas que se ven, cuatro que se pueden tocar, tres que se oyen, dos que se huelen y una que se saborea. Es aburrido a propósito: obliga a la atención a soltar el pensamiento repetitivo y volver a la habitación donde uno está."
+    },
+    {
+      "id": "lapso-no-es-recaida",
+      "titulo": "Un consumo no borra el proceso",
+      "categorias": [
+        "recaida",
+        "pensamientos"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Marlatt, efecto de violación de la abstinencia",
+      "sinonimos": [
+        "beber",
+        "consumir",
+        "da",
+        "fumar",
+        "fume",
+        "igual",
+        "racha",
+        "recai",
+        "recaida",
+        "regue",
+        "rompi",
+        "sigo",
+        "tome",
+        "volvi"
+      ],
+      "texto": "Después de un consumo aparece un pensamiento muy típico: 'ya la regué, da igual seguir'. Ese pensamiento hace más daño que el consumo mismo, porque convierte un episodio en una caída larga. Un día no borra los días anteriores: lo aprendido sigue ahí. Lo útil ahora es parar aquí, no mañana, y reconstruir qué pasó antes: dónde estaba, con quién, qué sentía, qué se dijo a sí misma la persona justo antes."
+    },
+    {
+      "id": "recaida-primeras-horas",
+      "titulo": "Qué hacer en las primeras horas después de una recaída",
+      "categorias": [
+        "recaida",
+        "senales"
+      ],
+      "niveles": [
+        "rojo"
+      ],
+      "fuente": "Guías clínicas de manejo de recaída",
+      "sinonimos": [
+        "acabo",
+        "ahora",
+        "anoche",
+        "beber",
+        "borrachera",
+        "consumir",
+        "cruda",
+        "hago",
+        "mal",
+        "puse",
+        "recai",
+        "recaida",
+        "tome"
+      ],
+      "texto": "Primero seguridad: no manejar, no quedarse en el lugar donde hay más consumo, hidratarse, comer algo. Después, avisarle a una persona de confianza el mismo día; el silencio es lo que alarga la recaída. Luego registrar lo que pasó sin adornos, porque la memoria de la recaída se distorsiona rápido. Y retomar la rutina en el siguiente bloque del día, no el lunes ni el mes que entra. La vergüenza empuja a esconderlo; esconderlo es lo que lo repite."
+    },
+    {
+      "id": "racha-reinicia",
+      "titulo": "La racha se reinicia, el récord se conserva",
+      "categorias": [
+        "recaida",
+        "recuperacion"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Diseño de UnDiaMas",
+      "sinonimos": [
+        "cero",
+        "contador",
+        "dias",
+        "empezar",
+        "mis",
+        "perdi",
+        "racha",
+        "recaida",
+        "record",
+        "registrar",
+        "reinicio"
+      ],
+      "texto": "En la app, registrar una recaída pone el contador de días en cero pero no borra el récord anterior. Eso es intencional: el récord demuestra que la persona ya fue capaz de sostener ese tiempo, y esa capacidad no se pierde por un día. Registrar la recaída no es un castigo, es información. Ocultarla solo deja el dato falso y las señales sin explicación."
+    },
+    {
+      "id": "detonantes-mapa",
+      "titulo": "Identificar el detonante concreto",
+      "categorias": [
+        "detonantes",
+        "senales"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Análisis funcional de la conducta",
+      "sinonimos": [
+        "amigos",
+        "antro",
+        "bar",
+        "cantina",
+        "cuando",
+        "dan",
+        "detonante",
+        "disparador",
+        "fiesta",
+        "ganas",
+        "pasa",
+        "trigger",
+        "viernes"
+      ],
+      "texto": "Los detonantes casi nunca son abstractos. Suelen ser un lugar (el bar de siempre, cierta calle), una hora (viernes por la noche, después del trabajo), una persona, una emoción concreta o un ritual (el cigarro con el café). Nombrar el detonante exacto convierte un 'no sé qué me pasa' en algo que se puede planear: cambiar la ruta, cambiar la hora, avisar antes, tener a alguien a quien escribir en ese momento."
+    },
+    {
+      "id": "plan-si-entonces",
+      "titulo": "Plan si-entonces, decidido antes",
+      "categorias": [
+        "prevencion",
+        "detonantes"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Gollwitzer, intenciones de implementación",
+      "sinonimos": [
+        "boda",
+        "fiesta",
+        "hago",
+        "invitaron",
+        "plan",
+        "prepararme",
+        "prevenir",
+        "reunion",
+        "voy"
+      ],
+      "texto": "Las decisiones tomadas en frío se sostienen mejor que las tomadas en medio del antojo. El formato es simple: 'si pasa X, entonces hago Y'. Si me invitan a la fiesta del viernes, entonces llego con mi coche y me voy a las once. Si termino el turno con ganas de tomar, entonces le marco a mi hermana antes de llegar a la casa. Tener la respuesta ya escrita quita el trabajo de decidir justo cuando decidir es más caro."
+    },
+    {
+      "id": "presion-social",
+      "titulo": "Cómo decir que no sin dar explicaciones",
+      "categorias": [
+        "detonantes",
+        "prevencion"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Entrenamiento en habilidades de rechazo",
+      "sinonimos": [
+        "amigos",
+        "boda",
+        "brindis",
+        "chela",
+        "copa",
+        "decir",
+        "digo",
+        "fiesta",
+        "insisten",
+        "presion",
+        "quiero",
+        "reunion",
+        "social",
+        "tomar"
+      ],
+      "texto": "No hay que justificarse ni contar la historia completa. Frases cortas, en tono normal y sin disculparse: 'hoy no', 'estoy manejando', 'ando con antibiótico', 'ya no tomo'. Repetir la misma frase sin variarla desarma la insistencia mejor que un argumento nuevo. Y tener lista una salida: la hora a la que uno se va, decidida antes de llegar."
+    },
+    {
+      "id": "abstinencia-cuerpo",
+      "titulo": "Lo que el cuerpo hace en la abstinencia",
+      "categorias": [
+        "abstinencia"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Descripción general de síndrome de abstinencia",
+      "sinonimos": [
+        "abstinencia",
+        "deje",
+        "fumar",
+        "insomnio",
+        "irritable",
+        "malestar",
+        "nausea",
+        "sindrome",
+        "sintomas",
+        "sudor",
+        "temblor",
+        "tomar",
+        "vomito"
+      ],
+      "texto": "Temblor, sudor, insomnio, irritabilidad, náusea y ansiedad son respuestas del cuerpo readaptándose, no señales de que algo salió mal. Tienen curva: suelen ser peores los primeros días y ceder después. Ayudan la hidratación, comer aunque no haya hambre, y bajar la exigencia esos días. Importante: la abstinencia de alcohol y la de benzodiacepinas pueden ser peligrosas y requieren supervisión médica, no fuerza de voluntad. Convulsiones, confusión, fiebre alta o alucinaciones son motivo de atención médica inmediata."
+    },
+    {
+      "id": "sobredosis-urgencia",
+      "titulo": "Señales que necesitan atención médica ya",
+      "categorias": [
+        "consecuencias",
+        "senales"
+      ],
+      "niveles": [
+        "rojo"
+      ],
+      "fuente": "Criterios generales de urgencia",
+      "sinonimos": [
+        "911",
+        "ambulancia",
+        "convulsion",
+        "desmayo",
+        "despierta",
+        "emergencia",
+        "inconsciente",
+        "mal",
+        "morado",
+        "respira",
+        "responde",
+        "sobredosis"
+      ],
+      "texto": "Hay cuadros que no se resuelven hablando: pérdida de conciencia, respiración muy lenta o irregular, labios azulados, convulsiones, dolor en el pecho, confusión intensa o vómito sin poder despertar. En México el número de emergencias es el 911. Ante sospecha de sobredosis se llama y se acompaña a la persona de lado, no se le deja sola ni se espera a que se le pase."
+    },
+    {
+      "id": "lineas-ayuda-mx",
+      "titulo": "Líneas de ayuda en México",
+      "categorias": [
+        "senales",
+        "ideacion",
+        "recuperacion"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Servicios públicos de México",
+      "sinonimos": [
+        "aa",
+        "ayuda",
+        "centro",
+        "clinica",
+        "crisis",
+        "grupo",
+        "linea",
+        "llamo",
+        "na",
+        "numero",
+        "pido",
+        "quien",
+        "telefono",
+        "urgencia"
+      ],
+      "texto": "Línea de la Vida, atención en adicciones y crisis, 800 911 2000, gratuita y las 24 horas. Emergencias, 911. Locatel en la Ciudad de México, 55 5658 1111. Alcohólicos Anónimos y Narcóticos Anónimos tienen grupos presenciales y en línea en casi todo el país. Estas líneas no reemplazan al contacto de confianza de la persona: se pueden usar las dos cosas."
+    },
+    {
+      "id": "ideacion-acompanar",
+      "titulo": "Cuando aparece la idea de no seguir",
+      "categorias": [
+        "ideacion"
+      ],
+      "niveles": [
+        "rojo"
+      ],
+      "fuente": "Principios de primeros auxilios psicológicos",
+      "sinonimos": [
+        "acabar",
+        "morir",
+        "pena",
+        "quiero",
+        "quitarme",
+        "seguir",
+        "suicidarme",
+        "suicidio",
+        "todo",
+        "vale",
+        "vida",
+        "vivir"
+      ],
+      "texto": "La idea de morir suele aparecer como intento de que pare el dolor, no como deseo de morir. Se puede nombrar directamente y sin rodeos; preguntar no siembra la idea. Lo que corresponde es no dejar sola a la persona, ayudarla a alejar los medios que tenga a la mano, acompañarla a llamar al 800 911 2000 o al 911, y avisar a su contacto de confianza. No es momento de discutir razones para vivir ni de dar consejos de rutina: es momento de compañía y de un profesional."
+    },
+    {
+      "id": "pensamientos-permisivos",
+      "titulo": "Los pensamientos que dan permiso",
+      "categorias": [
+        "pensamientos",
+        "intencion"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Beck, terapia cognitiva de las adicciones",
+      "sinonimos": [
+        "cigarro",
+        "controlarlo",
+        "controlo",
+        "dejo",
+        "empiezo",
+        "hoy",
+        "manana",
+        "merezco",
+        "nada",
+        "pasa",
+        "puedo",
+        "solo"
+      ],
+      "texto": "Antes de un consumo casi siempre pasa una frase por la cabeza que da permiso: 'solo una', 'me lo merezco', 'hoy fue horrible', 'total, mañana empiezo', 'ya controlo'. Reconocerlas como lo que son —permisos, no verdades— quita buena parte de su fuerza. Un ejercicio útil es escribir la propia lista de frases permisivas en un momento tranquilo y tener al lado la respuesta a cada una."
+    },
+    {
+      "id": "pensamiento-todo-nada",
+      "titulo": "Todo o nada",
+      "categorias": [
+        "pensamientos",
+        "emociones"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Distorsiones cognitivas",
+      "sinonimos": [
+        "entiende",
+        "falle",
+        "fracaso",
+        "igual",
+        "mal",
+        "nadie",
+        "nunca",
+        "poder",
+        "puedo",
+        "siempre",
+        "sirvo",
+        "soy",
+        "todo",
+        "voy"
+      ],
+      "texto": "'No sirvo', 'ya fallé', 'nunca voy a poder' son afirmaciones absolutas sobre una persona entera a partir de un episodio. Suelen aparecer con culpa o cansancio. Un contrapeso concreto funciona mejor que un ánimo genérico: qué evidencia hay a favor, qué evidencia hay en contra, y qué diría la persona si eso mismo se lo contara alguien a quien quiere."
+    },
+    {
+      "id": "culpa-vs-verguenza",
+      "titulo": "Culpa y vergüenza no son lo mismo",
+      "categorias": [
+        "emociones",
+        "recaida"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Investigación sobre vergüenza y conducta adictiva",
+      "sinonimos": [
+        "asco",
+        "atrevo",
+        "culpa",
+        "decepcion",
+        "decirlo",
+        "escondiendo",
+        "mentí",
+        "odio",
+        "pena",
+        "verguenza"
+      ],
+      "texto": "La culpa dice 'hice algo que no quería hacer' y empuja a reparar. La vergüenza dice 'soy alguien malo' y empuja a esconderse. En recuperación la vergüenza es el factor más asociado a seguir consumiendo, porque aísla justo cuando hace falta pedir ayuda. Mover el foco de 'quién soy' a 'qué hice y qué hago ahora' no es autoindulgencia: es lo que permite volver a intentar."
+    },
+    {
+      "id": "sueno",
+      "titulo": "El sueño sostiene el resto",
+      "categorias": [
+        "prevencion",
+        "abstinencia"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Higiene del sueño en recuperación",
+      "sinonimos": [
+        "cansado",
+        "despierto",
+        "desvelado",
+        "dormir",
+        "insomnio",
+        "madrugada",
+        "puedo",
+        "sueño",
+        "tomar"
+      ],
+      "texto": "El insomnio es de los síntomas más largos y de los que más aumentan el riesgo de volver a consumir, porque el cansancio baja la tolerancia al malestar. Ayuda una hora fija para levantarse, luz de día temprano, no dejar la pantalla en la cama, y no usar alcohol para dormir, que fragmenta el sueño aunque dé sueño al principio. Si el insomnio se sostiene semanas, se consulta."
+    },
+    {
+      "id": "ejercicio-rutina",
+      "titulo": "Movimiento y rutina",
+      "categorias": [
+        "prevencion",
+        "recuperacion"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Evidencia sobre ejercicio y craving",
+      "sinonimos": [
+        "caminar",
+        "correr",
+        "deporte",
+        "ejercicio",
+        "ganas",
+        "gimnasio",
+        "habitos",
+        "hago",
+        "moverme",
+        "rutina"
+      ],
+      "texto": "Caminar veinte o treinta minutos baja la intensidad del antojo en el momento y mejora el ánimo a mediano plazo. No hace falta un plan de gimnasio; lo que importa es que sea algo que se pueda repetir sin negociar cada día. La rutina misma es protectora: los huecos largos de tiempo sin nada planeado son de los momentos de mayor riesgo."
+    },
+    {
+      "id": "red-apoyo",
+      "titulo": "La red de apoyo se arma antes de necesitarla",
+      "categorias": [
+        "recuperacion",
+        "prevencion"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Modelos comunitarios de recuperación",
+      "sinonimos": [
+        "aislado",
+        "alguien",
+        "amigos",
+        "apoyo",
+        "ayuda",
+        "confianza",
+        "contacto",
+        "digo",
+        "familia",
+        "hablar",
+        "pareja",
+        "pedir",
+        "quien",
+        "solo"
+      ],
+      "texto": "Conviene tener nombres concretos y no la idea vaga de 'pedir ayuda': quién contesta de día, quién de madrugada, con quién se puede llegar a un grupo. En la app eso es el contacto de confianza, y es a quien avisa el sistema cuando el semáforo se pone en rojo. Decirle de antemano a esa persona qué se espera de ella —acompañar, no sermonear— evita que la conversación se vuelva un reclamo."
+    },
+    {
+      "id": "grupos-aa-na",
+      "titulo": "Grupos y tratamiento profesional",
+      "categorias": [
+        "recuperacion"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Opciones de tratamiento",
+      "sinonimos": [
+        "aa",
+        "alcoholicos",
+        "anonimos",
+        "clinica",
+        "grupo",
+        "medicamento",
+        "na",
+        "narcoticos",
+        "psicologo",
+        "psiquiatra",
+        "rehabilitacion",
+        "terapia",
+        "tratamiento"
+      ],
+      "texto": "Los grupos de pares (AA, NA y otros) y el tratamiento profesional no compiten: se combinan bien. Hay terapia psicológica con evidencia para adicciones —cognitivo-conductual, entrevista motivacional, manejo de contingencias— y hay tratamiento farmacológico para alcohol, opioides y nicotina que un médico puede indicar. Nada de esto se decide desde una app; lo que sí puede hacer la app es acompañar mientras y ayudar a llegar."
+    },
+    {
+      "id": "registro-diario",
+      "titulo": "Para qué sirve escribir el diario",
+      "categorias": [
+        "prevencion",
+        "recuperacion"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Automonitoreo en tratamiento de adicciones",
+      "sinonimos": [
+        "anotar",
+        "diario",
+        "escribir",
+        "privacidad",
+        "quien",
+        "registrar",
+        "sirve",
+        "terapeuta",
+        "ve"
+      ],
+      "texto": "Escribir lo que pasó, a qué hora y con qué intensidad convierte la recuperación en algo observable. Después de dos o tres semanas aparecen patrones que en el momento no se ven: que los jueves son peores, que el antojo llega siempre a la misma hora, que después de hablar con cierta persona sube. El diario en UnDiaMas es privado; lo que ve el terapeuta es el semáforo y las categorías, no el texto."
+    },
+    {
+      "id": "semaforo-app",
+      "titulo": "Cómo funciona el semáforo",
+      "categorias": [
+        "recuperacion",
+        "senales"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Diseño de UnDiaMas",
+      "sinonimos": [
+        "alerta",
+        "amarillo",
+        "app",
+        "funciona",
+        "nivel",
+        "puso",
+        "rojo",
+        "semaforo",
+        "verde"
+      ],
+      "texto": "Verde es estable, amarillo es que hay señales que conviene atender hoy, rojo es riesgo alto ahora. El análisis del diario y del ánimo solo puede subir el nivel, nunca bajarlo; para bajar hace falta un check-in hecho por la persona, que es un acto consciente. En rojo se avisa al contacto de confianza. El semáforo no es un juicio ni una calificación: es un aviso para actuar antes, no un castigo por lo que se escribió."
+    },
+    {
+      "id": "recompensas-tempranas",
+      "titulo": "Las primeras semanas y la anhedonia",
+      "categorias": [
+        "abstinencia",
+        "emociones"
+      ],
+      "niveles": [
+        "amarillo"
+      ],
+      "fuente": "Neurobiología de la recuperación temprana",
+      "sinonimos": [
+        "aburrido",
+        "anhedonia",
+        "apatia",
+        "da",
+        "desanimo",
+        "ganas",
+        "gris",
+        "gusto",
+        "nada",
+        "primeras",
+        "semanas",
+        "siento",
+        "sin",
+        "todo"
+      ],
+      "texto": "Es común que en las primeras semanas nada dé gusto: ni la comida, ni la música, ni la gente. Se llama anhedonia y es parte del reajuste del sistema de recompensa, no una señal de que la vida sin consumo vaya a ser así. Mejora con el tiempo, y mientras tanto ayuda hacer las cosas aunque no den ganas, porque el ánimo suele llegar después de la acción y no antes."
+    },
+    {
+      "id": "aburrimiento-vacio",
+      "titulo": "Aburrimiento y hueco de tiempo",
+      "categorias": [
+        "detonantes",
+        "emociones"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Prevención de recaídas, manejo del tiempo libre",
+      "sinonimos": [
+        "aburrido",
+        "aburrimiento",
+        "domingo",
+        "hacer",
+        "hueco",
+        "larga",
+        "libre",
+        "nada",
+        "tarde",
+        "tiempo",
+        "vacio",
+        "viernes"
+      ],
+      "texto": "El consumo ocupaba horas, dinero y compañía. Al quitarlo queda un hueco, y el hueco solo se siente como aburrimiento o vacío. No se llena con fuerza de voluntad sino con algo puesto ahí a propósito: una actividad con horario, gente con quien coincidir, algo que se pueda hacer con las manos. Los viernes y los domingos por la tarde suelen ser los huecos más peligrosos."
+    },
+    {
+      "id": "dinero-deudas",
+      "titulo": "Consecuencias prácticas: dinero, trabajo, casa",
+      "categorias": [
+        "consecuencias"
+      ],
+      "niveles": [
+        "amarillo",
+        "rojo"
+      ],
+      "fuente": "Manejo de consecuencias en tratamiento",
+      "sinonimos": [
+        "casa",
+        "despido",
+        "deudas",
+        "dinero",
+        "divorcio",
+        "familia",
+        "pareja",
+        "perdi",
+        "pleito",
+        "problemas",
+        "todo",
+        "trabajo"
+      ],
+      "texto": "Las deudas, los problemas en el trabajo y los conflictos en casa no se arreglan el mismo día que se deja de consumir, y esperar que sí es una vía rápida a la frustración. Sirve ordenarlos en una lista, elegir uno solo para esta semana y aceptar que varios se resuelven en meses. Confundir 'la vida ya debería estar arreglada' con 'entonces para qué sigo' es un salto que conviene ver venir."
+    },
+    {
+      "id": "avance-no-lineal",
+      "titulo": "El avance no es una línea recta",
+      "categorias": [
+        "recuperacion",
+        "pensamientos"
+      ],
+      "niveles": [
+        "verde",
+        "amarillo"
+      ],
+      "fuente": "Prochaska y DiClemente, modelo transteórico",
+      "sinonimos": [
+        "avance",
+        "avanzo",
+        "cansado",
+        "falta",
+        "intentar",
+        "pena",
+        "progreso",
+        "recaigo",
+        "rendirme",
+        "siempre",
+        "vale"
+      ],
+      "texto": "La recuperación tiene idas y vueltas, y las recaídas son parte frecuente del proceso, no su fracaso. Lo que distingue a quien avanza no es no haber caído nunca, sino cuánto tarda en volver a levantarse y si aprendió algo de la caída. Medir el progreso solo por el contador de días deja fuera lo demás: dormir mejor, contestar el teléfono, haber pedido ayuda una hora antes que la vez pasada."
+    }
+  ]
+}

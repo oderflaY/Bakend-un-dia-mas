@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/rag"
 )
 
 type Config struct {
@@ -17,6 +19,7 @@ type Config struct {
 	RefreshTokenTTL time.Duration
 	GeminiAPIKey    string
 	GeminiModel     string
+	EmbeddingModel  string
 }
 
 func Load() (Config, error) {
@@ -28,6 +31,8 @@ func Load() (Config, error) {
 		RefreshTokenTTL: envDuration("REFRESH_TOKEN_TTL", 30*24*time.Hour),
 		GeminiAPIKey:    os.Getenv("GEMINI_API_KEY"),
 		GeminiModel:     env("GEMINI_MODEL", "gemini-2.5-flash"),
+		// El modelo de embeddings es otro y se factura aparte del de chat.
+		EmbeddingModel: env("EMBEDDING_MODEL", rag.ModeloPorDefecto),
 	}
 
 	if c.DatabaseURL == "" {
