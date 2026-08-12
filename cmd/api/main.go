@@ -11,6 +11,16 @@ import (
 	"syscall"
 	"time"
 
+	// La base de zonas horarias, embebida en el binario.
+	//
+	// internal/stats y internal/reminders validan la zona que manda la app con
+	// time.LoadLocation, que por defecto lee /usr/share/zoneinfo del sistema. En
+	// una imagen mínima ese directorio no existe, así que sin esto
+	// "America/Mexico_City" sería una zona inválida y el servidor rechazaría
+	// todas las zonas horarias legítimas. Cuesta ~450 KB y quita la dependencia
+	// del sistema operativo de debajo.
+	_ "time/tzdata"
+
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/ai"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/alerts"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/analysis"

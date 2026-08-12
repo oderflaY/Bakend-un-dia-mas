@@ -1,0 +1,82 @@
+# Todo el backend: base de datos, API y el proxy que pone el HTTPS.
+#
+# Levantar:   docker compose up -d --build
+# Ver logs:   docker compose logs -f api
+# Actualizar: git pull && docker compose up -d --build
+#
+# Las variables salen de un archivo .env junto a este (ver .env.produccion.example).
+# La sintaxis ${VAR:?...} hace que compose se niegue a arrancar si falta, en vez
+# de levantar el servidor con un secreto vacío.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: undiamas
+      POSTGRES_USER: undiamas
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?falta DB_PASSWORD en .env}
+    # Ajuste para una máquina de 4 GB dedicada a esto.
+    command: >
+      postgres
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c maintenance_work_mem=256MB
+      -c work_mem=16MB
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Sin `ports`: la base NO se publica al exterior. Solo la alcanza el API por
+    # la red interna de compose. Es la diferencia entre tener Postgres en
+    # internet y no tenerlo.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U undiamas -d undiamas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Escucha en todas las interfaces *del contenedor*, que está aislado; el
+      # único que puede alcanzarlo es caddy.
+      ADDR: ":8080"
+      DATABASE_URL: postgres://undiamas:${DB_PASSWORD}@db:5432/undiamas?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET en .env}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+      REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-004}
+    depends_on:
+      db:
+        condition: service_healthy
+    # El proceso no escribe nada en disco, así que el sistema de archivos va en
+    # solo lectura. Si algún día alguien consigue ejecutar algo dentro, no puede
+    # dejar nada.
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    # Tampoco se publica: al mundo se sale por caddy.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO:?falta DOMINIO en .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Aquí viven los certificados. Sin este volumen, cada reinicio pediría
+      # certificados nuevos a Let's Encrypt y acabarías topando con su límite.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

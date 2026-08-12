@@ -1,0 +1,19 @@
+# Lo que no debe entrar en el contexto de compilación.
+#
+# El .env el primero: contiene JWT_SECRET y la cadena de la base. Copiarlo a una
+# capa de la imagen lo dejaría ahí para siempre, aunque después lo borraras.
+.env
+.env.*
+!.env.example
+!.env.produccion.example
+
+.git
+.gitignore
+bin/
+docs/
+*.md
+README.md
+Makefile
+
+# Los tests no se compilan en la imagen.
+**/*_test.go

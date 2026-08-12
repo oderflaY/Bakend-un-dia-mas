@@ -39,6 +39,19 @@ make test    # no necesita base de datos
 make build   # binario en bin/api
 ```
 
+## Desplegar
+
+Tres contenedores —base, API y proxy con HTTPS automático— en
+`docker-compose.yml`:
+
+```sh
+cp .env.produccion.example .env    # y rellena DOMINIO, DB_PASSWORD, JWT_SECRET
+docker compose up -d --build
+```
+
+El paso a paso completo sobre un VPS limpio (usuario, firewall, Docker, dominio
+y respaldos) está en [docs/desplegar.md](docs/desplegar.md).
+
 ## Rutas
 
 | Método | Ruta | Auth | Nota |

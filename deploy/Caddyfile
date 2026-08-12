@@ -1,0 +1,30 @@
+# Proxy de entrada. Saca y renueva el certificado TLS solo.
+#
+# DOMINIO viene del .env:
+#   - producción: api.tudominio.mx   → HTTPS automático con Let's Encrypt
+#   - prueba local: :80              → HTTP a secas, sin certificado
+
+{$DOMINIO} {
+	# El stream de avisos (SSE) no se puede acumular en el proxy: si Caddy
+	# bufferea, los eventos llegan a bloques y una alerta roja se queda esperando
+	# a que se llene el búfer. flush_interval -1 los manda en cuanto salen.
+	@sse path /v1/events
+	reverse_proxy @sse api:8080 {
+		flush_interval -1
+	}
+
+	reverse_proxy api:8080
+
+	# Sin cuerpos de petición gigantes: el propio backend ya corta en 1 MiB, esto
+	# lo para antes de llegar a Go.
+	request_body {
+		max_size 2MB
+	}
+
+	encode gzip
+
+	log {
+		output stdout
+		format console
+	}
+}
