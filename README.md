@@ -61,6 +61,8 @@ y respaldos) está en [docs/desplegar.md](docs/desplegar.md).
 | `POST` | `/v1/auth/login` | — | |
 | `POST` | `/v1/auth/refresh` | — | rota el par de tokens |
 | `POST` | `/v1/auth/logout` | Bearer | revoca todos los refresh del usuario |
+| `POST` | `/v1/auth/password/forgot` | — | `{email}`; siempre 204, no dice si la cuenta existe |
+| `POST` | `/v1/auth/password/reset` | — | `{email, codigo, password}`; cierra todas las sesiones |
 | `GET`  | `/v1/users/me` | Bearer | perfil + adicciones + contactos de emergencia |
 | `PATCH`| `/v1/users/me` | Bearer | `displayName`, `porQuePersonal`, `adicciones`, `adiccionPrincipal`, `consumoDesde`, `enTratamiento` — nunca `role` |
 | `DELETE`| `/v1/users/me` | Bearer | borra la cuenta; exige `{password}`; cascada total |
@@ -99,6 +101,9 @@ y respaldos) está en [docs/desplegar.md](docs/desplegar.md).
 | `POST` | `/v1/community/stories/{id}/reports` | Bearer | 3 reportes distintos → EN_REVISION |
 | `POST` | `/v1/community/stories/{id}/block-author` | Bearer | esconde todo lo de esa persona |
 | `POST` | `/v1/analysis/text` | Bearer | analiza un texto sin guardar nada |
+| `GET`  | `/v1/admin/moderation/stories` | rol `admin` | cola de revisión; la única ruta que devuelve `autorId` |
+| `POST` | `/v1/admin/moderation/stories/{id}/approve` | rol `admin` | `{motivo}`; la devuelve al muro |
+| `POST` | `/v1/admin/moderation/stories/{id}/remove` | rol `admin` | `{motivo}`; la retira para siempre |
 | `POST` | `/v1/ai/chat` | Bearer | |
 | `GET`  | `/v1/ai/messages?limit=50` | Bearer | |
 | `POST` | `/v1/ai/retrieve` | Bearer | diagnóstico del RAG; no llama al modelo |

@@ -123,6 +123,32 @@ curl -sX POST https://api.tudominio.mx/v1/auth/register \
 **No corras `make seed` aquí.** Las contraseñas de esas cuentas están en el
 repositorio; son para tu máquina.
 
+## 6 bis · El moderador del muro
+
+El rol `admin` existe pero no se puede pedir al registrarse: se concede a mano,
+y eso es a propósito. Es el único rol que ve identificadores de autores, así que
+darlo tiene que costar entrar al servidor.
+
+Regístrate primero desde la app con tu correo, y luego:
+
+```bash
+docker compose exec -T db psql -U undiamas -d undiamas \
+  -c "UPDATE users SET role = 'admin' WHERE email = 'tu@correo.mx';"
+```
+
+Cierra sesión y vuelve a entrar: el rol viaja dentro del access token y el que
+tienes ahora mismo todavía dice `patient`.
+
+Con eso ya puedes ver la cola:
+
+```bash
+curl -s https://api.tudominio.mx/v1/admin/moderation/stories \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Sin nadie con este rol, las historias denunciadas tres veces desaparecen del
+muro y no hay forma de devolverlas.
+
 ## 7 · Respaldos
 
 ```bash
@@ -168,6 +194,13 @@ base de datos entera.
 | Caddy no saca certificado | `docker compose logs caddy` — casi siempre DNS que no resuelve |
 | El API reinicia en bucle | `docker compose logs api` — falta `JWT_SECRET` o mide menos de 32 bytes |
 | Los avisos SSE llegan a bloques | `flush_interval -1` en el `Caddyfile` |
+| `/v1/auth/password/*` da 503 | falta `SMTP_HOST` en el `.env` |
+| No llega el correo de recuperación | `docker compose logs api` — con Gmail suele ser que falta la contraseña **de aplicación** |
+| `429` al probar el login varias veces | es el límite de 10 por minuto y por IP; espera un minuto |
+
+Cuando el servidor responda, sigue con
+[checklist-produccion.md](checklist-produccion.md): es lo que falta para poder
+publicar en Play.
 
 La imagen del API no tiene shell, así que `docker compose exec api sh` no
 funciona: es a propósito, y por eso el diagnóstico va por los logs. Si necesitas

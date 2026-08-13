@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    El icono en Android 8 y posteriores.
+
+    Las dos capas van por separado porque el sistema las trata distinto: recorta
+    ambas con la forma que elija el fabricante y desplaza la de frente sobre la
+    de fondo al animar. De ahí que el fondo tenga que ir a sangre.
+
+    <monochrome> es lo que permite que el icono se adapte al tema del sistema en
+    Android 13+. Sin esa línea, el lanzador dibuja el icono a color en medio de
+    los demás ya teñidos y canta.
+
+    Los PNG de mipmap-mdpi..xxxhdpi son el respaldo para Android 7 y anteriores,
+    que no entienden este archivo.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background"/>
+    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome"/>
+</adaptive-icon>

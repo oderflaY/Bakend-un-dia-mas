@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -29,7 +28,7 @@ type Handler struct {
 	alerts    *alerts.Service
 	issuer    *auth.TokenIssuer
 	retriever Retriever // puede ser nil: ver el comentario de Retriever
-	limiter   *rateLimiter
+	limiter   *httpx.Limiter
 }
 
 func NewHandler(db *pgxpool.Pool, client Client, checkIns *checkins.Store,
@@ -41,7 +40,9 @@ func NewHandler(db *pgxpool.Pool, client Client, checkIns *checkins.Store,
 		alerts:    alertSvc,
 		issuer:    issuer,
 		retriever: retriever,
-		limiter:   newRateLimiter(20, time.Minute),
+		// Por usuario, no por IP: aquí ya hay token, y una casa entera detrás de
+		// la misma IP no tiene por qué compartir cuota de chat.
+		limiter: httpx.NewLimiter(20, time.Minute),
 	}
 }
 
@@ -91,7 +92,7 @@ func (h *Handler) retrieve(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) chat(w http.ResponseWriter, r *http.Request) {
 	id := auth.MustFrom(r.Context())
 
-	if !h.limiter.allow(id.UserID) {
+	if !h.limiter.Allow(id.UserID) {
 		httpx.Error(w, http.StatusTooManyRequests, "rate-limited", "demasiados mensajes seguidos, espera un momento")
 		return
 	}
@@ -255,36 +256,4 @@ func (h *Handler) Run(ctx context.Context, userID, name string, args map[string]
 		return map[string]any{"alertId": a.ID, "guardada": true}, nil
 	}
 	return nil, fmt.Errorf("herramienta desconocida: %s", name)
-}
-
-// rateLimiter: ventana fija por usuario, en memoria. Suficiente para una sola
-// instancia; con varias réplicas hay que moverlo a Redis o a la propia base.
-type rateLimiter struct {
-	mu     sync.Mutex
-	hits   map[string][]time.Time
-	limit  int
-	window time.Duration
-}
-
-func newRateLimiter(limit int, window time.Duration) *rateLimiter {
-	return &rateLimiter{hits: map[string][]time.Time{}, limit: limit, window: window}
-}
-
-func (l *rateLimiter) allow(key string) bool {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	cutoff := time.Now().Add(-l.window)
-	kept := l.hits[key][:0]
-	for _, t := range l.hits[key] {
-		if t.After(cutoff) {
-			kept = append(kept, t)
-		}
-	}
-	if len(kept) >= l.limit {
-		l.hits[key] = kept
-		return false
-	}
-	l.hits[key] = append(kept, time.Now())
-	return true
 }

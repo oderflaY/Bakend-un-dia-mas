@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/addiction"
 )
@@ -150,6 +151,94 @@ func (s *Store) RevokeAllTokens(ctx context.Context, userID string) error {
 		UPDATE refresh_tokens SET revoked_at = now()
 		WHERE user_id = $1 AND revoked_at IS NULL`, userID)
 	return err
+}
+
+// ------------------------------------------------- recuperar la contraseña
+
+// ResetReciente dice si a esa persona ya se le mandó un código hace poco. Es el
+// freno contra usar la recuperación para inundarle el buzón a alguien.
+func (s *Store) ResetReciente(ctx context.Context, userID string, dentroDe time.Duration) (bool, error) {
+	var existe bool
+	err := s.db.QueryRow(ctx, `
+		SELECT EXISTS(
+			SELECT 1 FROM password_resets
+			WHERE user_id = $1 AND usado_en IS NULL AND created_at > now() - $2::interval
+		)`, userID, dentroDe.String()).Scan(&existe)
+	return existe, err
+}
+
+func (s *Store) CrearReset(ctx context.Context, userID, codeHash string, expira time.Time) error {
+	_, err := s.db.Exec(ctx, `
+		INSERT INTO password_resets (user_id, code_hash, expires_at)
+		VALUES ($1, $2, $3)`, userID, codeHash, expira)
+	return err
+}
+
+// UsarReset comprueba el código y cambia la contraseña. Todo va en una
+// transacción porque son tres escrituras que solo tienen sentido juntas: gastar
+// el código, cambiar el hash y tirar las sesiones abiertas. Si la última fallara
+// por su cuenta, quien haya entrado con la contraseña vieja seguiría dentro
+// después de que su víctima la cambiara, que es el escenario exacto del que
+// alguien huye al recuperar una cuenta.
+func (s *Store) UsarReset(ctx context.Context, email, codigo, passwordHash string) error {
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // no-op tras commit
+
+	var resetID, codeHash, userID string
+	// El más reciente que siga vivo: sin usar, sin caducar y con intentos de
+	// sobra. FOR UPDATE serializa dos verificaciones simultáneas del mismo
+	// código, para que el contador de intentos no se pierda entre ellas.
+	err = tx.QueryRow(ctx, `
+		SELECT pr.id::text, pr.code_hash, pr.user_id::text
+		FROM password_resets pr
+		JOIN users u ON u.id = pr.user_id
+		WHERE lower(u.email) = lower($1)
+		  AND pr.usado_en IS NULL
+		  AND pr.expires_at > now()
+		  AND pr.intentos < $2
+		ORDER BY pr.created_at DESC
+		LIMIT 1
+		FOR UPDATE OF pr`, email, resetMaxIntentos).Scan(&resetID, &codeHash, &userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrResetInvalido
+	}
+	if err != nil {
+		return err
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(codeHash), []byte(codigo)) != nil {
+		// El intento fallido se cobra aunque la transacción no cambie nada más.
+		// Por eso se hace commit: con rollback, el contador nunca subiría y los
+		// cinco intentos serían infinitos.
+		if _, err := tx.Exec(ctx,
+			`UPDATE password_resets SET intentos = intentos + 1 WHERE id = $1`, resetID); err != nil {
+			return err
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return err
+		}
+		return ErrResetInvalido
+	}
+
+	if _, err := tx.Exec(ctx,
+		`UPDATE password_resets SET usado_en = now() WHERE id = $1`, resetID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx,
+		`UPDATE users SET password_hash = $2 WHERE id = $1`, userID, passwordHash); err != nil {
+		return err
+	}
+	// Cambiar la contraseña cierra todas las sesiones, también las del
+	// dispositivo desde el que se está cambiando.
+	if _, err := tx.Exec(ctx, `
+		UPDATE refresh_tokens SET revoked_at = now()
+		WHERE user_id = $1 AND revoked_at IS NULL`, userID); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 func isUniqueViolation(err error) bool {

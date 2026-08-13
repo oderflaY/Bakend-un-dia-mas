@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/mailer"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/rag"
 )
 
@@ -20,6 +21,7 @@ type Config struct {
 	GeminiAPIKey    string
 	GeminiModel     string
 	EmbeddingModel  string
+	SMTP            mailer.Config
 }
 
 func Load() (Config, error) {
@@ -33,6 +35,19 @@ func Load() (Config, error) {
 		GeminiModel:     env("GEMINI_MODEL", "gemini-2.5-flash"),
 		// El modelo de embeddings es otro y se factura aparte del de chat.
 		EmbeddingModel: env("EMBEDDING_MODEL", rag.ModeloPorDefecto),
+
+		// Correo saliente, solo para recuperar contraseñas. Sin SMTP_HOST el
+		// servidor arranca igual y esas dos rutas responden 503.
+		SMTP: mailer.Config{
+			Host: os.Getenv("SMTP_HOST"),
+			// 587 es STARTTLS, que es lo que ofrece casi todo el mundo. El 465
+			// (TLS directo) también funciona: lo detecta el mailer por el número.
+			Port:     envInt("SMTP_PORT", 587),
+			User:     os.Getenv("SMTP_USER"),
+			Pass:     os.Getenv("SMTP_PASSWORD"),
+			From:     os.Getenv("SMTP_FROM"),
+			FromName: env("SMTP_FROM_NAME", "Un Día Más"),
+		},
 	}
 
 	if c.DatabaseURL == "" {
@@ -46,6 +61,13 @@ func Load() (Config, error) {
 
 func env(key, def string) string {
 	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+func envInt(key string, def int) int {
+	if v, err := strconv.Atoi(os.Getenv(key)); err == nil && v > 0 {
 		return v
 	}
 	return def

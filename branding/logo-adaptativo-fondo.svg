@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Fondo del icono">
+  <title>Un Día Más — capa de fondo del icono adaptativo</title>
+
+  <!--
+    La capa de fondo: solo el cielo, a sangre.
+    Tiene que cubrir el lienzo entero porque el sistema la recorta con la forma
+    del fabricante y, además, la desplaza un poco al animarla. Cualquier hueco
+    aparecería como un borde transparente en esos movimientos.
+  -->
+
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1E2B4D"/>
+      <stop offset="1" stop-color="#0D1526"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#cielo)"/>
+</svg>

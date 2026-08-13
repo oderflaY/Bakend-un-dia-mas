@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Icono monocromo para los iconos temáticos de Android 13+.
+
+    Cuando la persona activa "iconos con tema", el sistema tira el color del
+    icono y repinta esta silueta con los colores de su fondo de pantalla. Solo
+    usa la forma: el color de aquí da igual, lo que importa es el canal alfa.
+
+    Por eso el resplandor desaparece —un degradado casi transparente se
+    convertiría en una mancha sucia al repintarlo— y el dibujo se queda en lo que
+    de verdad identifica al logo: medio disco, cinco rayos y una línea. Si la
+    silueta no se reconociera sin color, el logo estaría mal diseñado.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024"
+    android:tint="?attr/colorControlNormal">
+
+    <group
+        android:pivotX="512" android:pivotY="495"
+        android:scaleX="0.85" android:scaleY="0.85"
+        android:translateY="17">
+
+        <path android:fillColor="#000000" android:pathData="M322,640 A190,190 0 0 1 702,640 Z"/>
+
+        <path android:pathData="M720.4,542.8 L783.9,513.2"
+            android:strokeColor="#000000" android:strokeWidth="22" android:strokeLineCap="round"/>
+        <path android:pathData="M618.2,436 L650.5,373.9"
+            android:strokeColor="#000000" android:strokeWidth="22" android:strokeLineCap="round"/>
+        <path android:pathData="M512,410 L512,340"
+            android:strokeColor="#000000" android:strokeWidth="22" android:strokeLineCap="round"/>
+        <path android:pathData="M405.8,436 L373.5,373.9"
+            android:strokeColor="#000000" android:strokeWidth="22" android:strokeLineCap="round"/>
+        <path android:pathData="M303.6,542.8 L240.1,513.2"
+            android:strokeColor="#000000" android:strokeWidth="22" android:strokeLineCap="round"/>
+
+        <path android:fillColor="#000000"
+            android:pathData="M187,628 L837,628 A11,11 0 0 1 837,650 L187,650 A11,11 0 0 1 187,628 Z"/>
+    </group>
+</vector>

@@ -62,6 +62,7 @@ var (
 	ErrSinAlias      = errors.New("elige un alias antes de publicar")
 	ErrNoEncontrada  = errors.New("no existe esa historia")
 	ErrPropia        = errors.New("es tu propia historia")
+	ErrNoEnRevision  = errors.New("esa historia no está en revisión")
 )
 
 // Estado de una historia.
@@ -460,10 +461,15 @@ func (s *Store) Reportar(ctx context.Context, userID, storyID, motivo, detalle s
 		return "", ErrPropia
 	}
 
+	// El WHERE del ON CONFLICT no es decorativo: el índice único es parcial
+	// —solo cubre los reportes vivos, ver 0005_moderacion.sql— y Postgres no
+	// infiere un índice parcial si no se le repite su predicado. Sin esta línea
+	// el INSERT falla con 42P10 en vez de ignorar el duplicado.
 	tag, err := tx.Exec(ctx, `
 		INSERT INTO community_reports (story_id, reporter_id, motivo, detalle)
 		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (story_id, reporter_id) DO NOTHING`, storyID, userID, motivo, detalle)
+		ON CONFLICT (story_id, reporter_id) WHERE resuelto_en IS NULL
+		DO NOTHING`, storyID, userID, motivo, detalle)
 	if err != nil {
 		return "", err
 	}

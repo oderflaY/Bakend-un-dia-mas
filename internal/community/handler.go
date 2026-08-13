@@ -1,6 +1,7 @@
 package community
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -28,6 +29,76 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.Handle("PUT /v1/community/stories/{id}/useful", m(http.HandlerFunc(h.util)))
 	mux.Handle("POST /v1/community/stories/{id}/reports", m(http.HandlerFunc(h.reportar)))
 	mux.Handle("POST /v1/community/stories/{id}/block-author", m(http.HandlerFunc(h.bloquear)))
+
+	// La cola de moderación. Rol admin, que no se puede pedir al registrarse.
+	admin := func(f http.HandlerFunc) http.Handler {
+		return m(auth.RequireRole(auth.RoleAdmin, f))
+	}
+	mux.Handle("GET /v1/admin/moderation/stories", admin(h.cola))
+	mux.Handle("POST /v1/admin/moderation/stories/{id}/approve", admin(h.aprobar))
+	mux.Handle("POST /v1/admin/moderation/stories/{id}/remove", admin(h.retirar))
+}
+
+func (h *Handler) cola(w http.ResponseWriter, r *http.Request) {
+	lista, err := h.store.Cola(r.Context(), httpx.Limit(r, 50, 200))
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "internal", "no se pudo leer la cola")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, map[string]any{
+		"pendientes": len(lista),
+		"historias":  lista,
+	})
+}
+
+func (h *Handler) aprobar(w http.ResponseWriter, r *http.Request) {
+	h.moderar(w, r, h.store.Aprobar, "aprobada")
+}
+
+func (h *Handler) retirar(w http.ResponseWriter, r *http.Request) {
+	h.moderar(w, r, h.store.Retirar, "retirada")
+}
+
+// moderar es el tronco de las dos decisiones: se diferencian en una llamada al
+// store y en la palabra que devuelven.
+func (h *Handler) moderar(w http.ResponseWriter, r *http.Request,
+	accion func(ctx context.Context, moderadorID, storyID, motivo string) error, resultado string) {
+	id := auth.MustFrom(r.Context())
+
+	var in struct {
+		Motivo string `json:"motivo"`
+	}
+	if err := httpx.Decode(w, r, &in); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "invalid-argument", err.Error())
+		return
+	}
+	// El motivo es obligatorio en las dos direcciones. Una decisión de
+	// moderación sin razón escrita no se puede revisar después, y "¿por qué se
+	// retiró mi historia?" es una pregunta que alguien va a hacer.
+	in.Motivo = strings.TrimSpace(in.Motivo)
+	if in.Motivo == "" {
+		httpx.Error(w, http.StatusBadRequest, "invalid-argument", "escribe el motivo de la decisión")
+		return
+	}
+	if len([]rune(in.Motivo)) > maxDetalle {
+		httpx.Error(w, http.StatusBadRequest, "invalid-argument", "el motivo es demasiado largo")
+		return
+	}
+
+	err := accion(r.Context(), id.UserID, r.PathValue("id"), in.Motivo)
+	switch {
+	case errors.Is(err, ErrNoEncontrada):
+		httpx.Error(w, http.StatusNotFound, "not-found", "no existe esa historia")
+		return
+	case errors.Is(err, ErrNoEnRevision):
+		// 409 y no 400: la petición era válida, pero alguien llegó antes.
+		httpx.Error(w, http.StatusConflict, "not-in-review", "esa historia ya no está en revisión")
+		return
+	case err != nil:
+		httpx.Error(w, http.StatusInternalServerError, "internal", "no se pudo moderar")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, map[string]any{"resultado": resultado})
 }
 
 func (h *Handler) perfil(w http.ResponseWriter, r *http.Request) {

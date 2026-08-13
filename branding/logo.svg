@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Un Día Más">
+  <title>Un Día Más</title>
+
+  <!--
+    El logo: un sol saliendo sobre el horizonte.
+
+    Tres reglas de construcción, y las tres están para que sobreviva a lo que
+    Android le va a hacer:
+
+      1. Sin filtros ni desenfoques, y sin clipPath. El resplandor es un
+         degradado radial y el sol es un semidisco dibujado como tal, no un
+         círculo recortado. Los vector drawables de Android no saben de filtros
+         y llevan mal los recortes, así que evitarlos hace que este archivo y el
+         icono de la app sean el mismo dibujo y no dos que se parecen.
+      2. Todo dentro de la zona segura. Android recorta el icono con la forma
+         que el fabricante quiera —círculo, cuadrado, gota— y solo garantiza el
+         66% central. Por eso el icono adaptativo (logo-adaptativo-frente.svg)
+         reencuadra este dibujo en vez de usarlo tal cual.
+      3. Legible en monocromo y a 48 px. La silueta —medio disco sobre una
+         línea— se reconoce sin color y sin detalle. Es la prueba que no pasan
+         los logos con texto dentro.
+  -->
+
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1E2B4D"/>
+      <stop offset="1" stop-color="#0D1526"/>
+    </linearGradient>
+
+    <linearGradient id="sol" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD166"/>
+      <stop offset="1" stop-color="#FF8C42"/>
+    </linearGradient>
+
+    <!-- El resplandor del amanecer. Llega a 0 de opacidad en el borde para que
+         no se vea dónde acaba. -->
+    <radialGradient id="resplandor" cx="512" cy="640" r="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF9A3C" stop-opacity="0.45"/>
+      <stop offset="0.55" stop-color="#FF9A3C" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#FF9A3C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#cielo)"/>
+
+  <!-- Medio disco, no un círculo: la luz sale del horizonte, no lo atraviesa. -->
+  <path d="M 132 640 A 380 380 0 0 1 892 640 Z" fill="url(#resplandor)"/>
+  <path d="M 322 640 A 190 190 0 0 1 702 640 Z" fill="url(#sol)"/>
+
+  <!-- Los rayos: cinco, impares y simétricos. Con un número par el del centro
+       desaparece y el conjunto pierde el eje vertical. -->
+  <g stroke="#FFD166" stroke-width="22" stroke-linecap="round">
+    <line x1="720.4" y1="542.8" x2="783.9" y2="513.2"/>
+    <line x1="618.2" y1="436.0" x2="650.5" y2="373.9"/>
+    <line x1="512.0" y1="410.0" x2="512.0" y2="340.0"/>
+    <line x1="405.8" y1="436.0" x2="373.5" y2="373.9"/>
+    <line x1="303.6" y1="542.8" x2="240.1" y2="513.2"/>
+  </g>
+
+  <!-- El horizonte. Un rectángulo redondeado y no un trazo. -->
+  <rect x="176" y="628" width="672" height="22" rx="11" fill="#F7C873"/>
+</svg>

@@ -16,17 +16,48 @@ import (
 type Handler struct {
 	store  *Store
 	issuer *TokenIssuer
+	// correo puede no estar configurado: sin SMTP, la recuperación de contraseña
+	// responde 503 y el resto de auth funciona igual.
+	correo Correo
 }
 
-func NewHandler(store *Store, issuer *TokenIssuer) *Handler {
-	return &Handler{store: store, issuer: issuer}
+func NewHandler(store *Store, issuer *TokenIssuer, correo Correo) *Handler {
+	return &Handler{store: store, issuer: issuer, correo: correo}
 }
 
 func (h *Handler) Routes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /v1/auth/register", h.register)
-	mux.HandleFunc("POST /v1/auth/login", h.login)
-	mux.HandleFunc("POST /v1/auth/refresh", h.refresh)
+	// Límite por IP en todo lo que se puede llamar sin estar autenticado. Es la
+	// única barrera entre /login y quien quiera probar contraseñas a la
+	// velocidad que aguante el servidor.
+	//
+	// 10 por minuto es holgado para una persona —fallar la contraseña tres o
+	// cuatro veces seguidas es normal— y ridículo para un script.
+	//
+	// El límite es por IP, no por correo: hacerlo por correo permitiría dejar a
+	// cualquiera fuera de su propia cuenta a base de intentos fallidos.
+	lim := httpx.NewLimiter(10, time.Minute)
+	publica := func(f http.HandlerFunc) http.Handler { return lim.PorIP(f) }
+
+	mux.Handle("POST /v1/auth/register", publica(h.register))
+	mux.Handle("POST /v1/auth/login", publica(h.login))
+	mux.Handle("POST /v1/auth/refresh", publica(h.refresh))
 	mux.Handle("POST /v1/auth/logout", h.issuer.Middleware(http.HandlerFunc(h.logout)))
+
+	// Recuperar la contraseña. Comparten el limitador con el resto: quien
+	// martillea /login no gana nada cambiándose a /password/reset.
+	if h.correo != nil && h.correo.Configurado() {
+		mux.Handle("POST /v1/auth/password/forgot", publica(h.forgot))
+		mux.Handle("POST /v1/auth/password/reset", publica(h.reset))
+	} else {
+		// Registradas igualmente, para que la app reciba un 503 explicable en
+		// vez de un 404 que parece un error de integración.
+		sinCorreo := func(w http.ResponseWriter, _ *http.Request) {
+			httpx.Error(w, http.StatusServiceUnavailable, "email-unavailable",
+				"la recuperación por correo no está configurada en este servidor")
+		}
+		mux.Handle("POST /v1/auth/password/forgot", publica(sinCorreo))
+		mux.Handle("POST /v1/auth/password/reset", publica(sinCorreo))
+	}
 }
 
 type credentials struct {

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Capa de frente del icono adaptativo: el sol saliendo.
+
+    El <group> es el reencuadre a la zona segura, el mismo que explica
+    branding/logo-adaptativo-frente.svg: escala 0.85 sobre el pivote (512,495)
+    —el centro del dibujo— y luego baja 17 para dejarlo centrado en el lienzo.
+    Android aplica translate DESPUÉS de la escala, así que ese 17 va en unidades
+    del viewport y no del dibujo escalado.
+
+    Sin este grupo, con máscara redonda se cortarían los extremos del horizonte.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+
+    <group
+        android:pivotX="512" android:pivotY="495"
+        android:scaleX="0.85" android:scaleY="0.85"
+        android:translateY="17">
+
+        <!-- El resplandor del amanecer. Medio disco: la luz sale del horizonte,
+             no lo atraviesa. Los alfas van en el color (#73 = 45%, #26 = 15%). -->
+        <path android:pathData="M132,640 A380,380 0 0 1 892,640 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="radial"
+                    android:centerX="512" android:centerY="640"
+                    android:gradientRadius="380">
+                    <item android:offset="0" android:color="#73FF9A3C"/>
+                    <item android:offset="0.55" android:color="#26FF9A3C"/>
+                    <item android:offset="1" android:color="#00FF9A3C"/>
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- El sol. -->
+        <path android:pathData="M322,640 A190,190 0 0 1 702,640 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="512" android:startY="450"
+                    android:endX="512" android:endY="640">
+                    <item android:offset="0" android:color="#FFD166"/>
+                    <item android:offset="1" android:color="#FF8C42"/>
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Los rayos: cinco, impares y simétricos. -->
+        <path android:pathData="M720.4,542.8 L783.9,513.2"
+            android:strokeColor="#FFD166" android:strokeWidth="22" android:strokeLineCap="round"/>
+        <path android:pathData="M618.2,436 L650.5,373.9"
+            android:strokeColor="#FFD166" android:strokeWidth="22" android:strokeLineCap="round"/>
+        <path android:pathData="M512,410 L512,340"
+            android:strokeColor="#FFD166" android:strokeWidth="22" android:strokeLineCap="round"/>
+        <path android:pathData="M405.8,436 L373.5,373.9"
+            android:strokeColor="#FFD166" android:strokeWidth="22" android:strokeLineCap="round"/>
+        <path android:pathData="M303.6,542.8 L240.1,513.2"
+            android:strokeColor="#FFD166" android:strokeWidth="22" android:strokeLineCap="round"/>
+
+        <!-- El horizonte: rectángulo redondeado, dibujado como trazado porque
+             los vector drawables no tienen <rect>. -->
+        <path android:fillColor="#F7C873"
+            android:pathData="M187,628 L837,628 A11,11 0 0 1 837,650 L187,650 A11,11 0 0 1 187,628 Z"/>
+    </group>
+</vector>

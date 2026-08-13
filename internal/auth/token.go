@@ -17,6 +17,11 @@ type Role string
 const (
 	RolePatient   Role = "patient"
 	RoleTherapist Role = "therapist"
+	// RoleAdmin atiende la cola de moderación del muro. No se puede pedir al
+	// registrarse —CreateUser siempre inserta 'patient'—: se concede a mano en
+	// la base, y eso es deliberado. Es el único rol que ve identificadores de
+	// autores, así que darlo tiene que costar entrar al servidor.
+	RoleAdmin Role = "admin"
 )
 
 type Claims struct {

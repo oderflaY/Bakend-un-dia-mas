@@ -32,6 +32,7 @@ import (
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/httpx"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/journal"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/lexicon"
+	"github.com/oderflaY/Bakend-un-dia-mas/internal/mailer"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/mood"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/notify"
 	"github.com/oderflaY/Bakend-un-dia-mas/internal/rag"
@@ -89,7 +90,14 @@ func run() error {
 	lightSvc := trafficlight.NewService(pool, hub, alertSvc)
 	therapistStore := therapist.NewStore(pool)
 
-	auth.NewHandler(auth.NewStore(pool), issuer).Routes(mux)
+	// El correo solo se usa para recuperar contraseñas. Si no hay SMTP_HOST, el
+	// mailer queda inerte y esas dos rutas contestan 503; todo lo demás va igual.
+	correo := mailer.New(cfg.SMTP)
+	if !correo.Configurado() {
+		slog.Warn("SMTP sin configurar: /v1/auth/password/* queda deshabilitado")
+	}
+
+	auth.NewHandler(auth.NewStore(pool), issuer, correo).Routes(mux)
 	users.NewHandler(users.NewStore(pool), issuer).Routes(mux)
 	notify.NewHandler(hub, issuer).Routes(mux)
 	// El muro de comunidad. No depende de Gemini ni del RAG: es contenido de
