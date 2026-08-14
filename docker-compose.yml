@@ -8,10 +8,25 @@
 # La sintaxis ${VAR:?...} hace que compose se niegue a arrancar si falta, en vez
 # de levantar el servidor con un secreto vacío.
 
+# Techo a los logs, heredado por los tres servicios.
+#
+# Docker guarda la salida de cada contenedor en un JSON que, por defecto, NO
+# tiene límite: crece hasta llenar el disco. Con el API registrando una línea
+# por petición y Caddy otra, eso es cuestión de meses, y el final es el peor
+# posible: Postgres no puede escribir, el disco está lleno, y el servidor lleva
+# horas caído. 30 MB por servicio son días de historial de sobra para
+# diagnosticar algo.
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:17-alpine
     restart: unless-stopped
+    logging: *logs
     environment:
       POSTGRES_DB: undiamas
       POSTGRES_USER: undiamas
@@ -37,6 +52,7 @@ services:
   api:
     build: .
     restart: unless-stopped
+    logging: *logs
     environment:
       # Escucha en todas las interfaces *del contenedor*, que está aislado; el
       # único que puede alcanzarlo es caddy.
@@ -70,6 +86,7 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    logging: *logs
     ports:
       - "80:80"
       - "443:443"
