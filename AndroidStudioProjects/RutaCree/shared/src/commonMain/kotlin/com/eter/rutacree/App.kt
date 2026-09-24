@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.Help
 import androidx.compose.material.icons.outlined.LocationOn
@@ -688,4 +687,4 @@ fun Modifier.neomorphicInset(bgPrimary: Color) = this
     .background(bgPrimary)
     .shadow(4.dp, RoundedCornerShape(12.dp), ambientColor = Color(0xFFC5CBD5), spotColor = Color(0xFFC5CBD5), clip = false)
 
-fun Modifier.marginBottom(dp: Int) = this.padding(bottom = dp.dp)
+fun Modifier.marginBottom(dp: Dp) = this.padding(bottom = dp)
