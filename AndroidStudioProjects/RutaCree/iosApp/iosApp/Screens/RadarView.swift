@@ -355,22 +355,66 @@ private struct ScheduleView: View {
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(neu.text)
                 .accessibilityAddTraits(.isHeader)
-            if departures.isEmpty {
-                Text(L10n.t("schedule_none")).font(.system(size: 15)).foregroundStyle(neu.textMuted)
-            } else {
-                HStack(spacing: 10) {
-                    ForEach(Array(departures.enumerated()), id: \.offset) { _, minute in
-                        Text(Format.clock(minute.int32Value))
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(neu.text)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .neuInset(Shapes.pill, distance: 3)
+            if let next = departures.first {
+                NextDepartureView(minute: next.int32Value, nowMinuteOfDay: nowMinuteOfDay)
+                let later = departures.dropFirst().map(\.int32Value)
+                if !later.isEmpty {
+                    Text(L10n.t("schedule_later"))
+                        .font(.system(size: 13))
+                        .foregroundStyle(neu.textMuted)
+                        .padding(.top, 4)
+                    // Even columns that wrap to a new line instead of squeezing when the text is large.
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 8)], spacing: 8) {
+                        ForEach(Array(later.enumerated()), id: \.offset) { _, minute in
+                            Text(Format.clock(minute))
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(neu.text)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .neuInset(Shapes.pill, distance: 3)
+                        }
                     }
                 }
+            } else {
+                Text(L10n.t("schedule_none")).font(.system(size: 15)).foregroundStyle(neu.textMuted)
             }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+private struct NextDepartureView: View {
+    @Environment(\.neu) private var neu
+    let minute: Int32
+    let nowMinuteOfDay: Int32
+
+    private var waitText: String {
+        let wait = Int(TransitKt.minutesUntil(departure: minute, nowMinuteOfDay: nowMinuteOfDay))
+        if wait == 0 { return L10n.t("schedule_now") }
+        if wait < 60 { return L10n.t("schedule_in_minutes", wait) }
+        if wait % 60 == 0 { return L10n.t("schedule_in_hours_exact", wait / 60) }
+        return L10n.t("schedule_in_hours", wait / 60, wait % 60)
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L10n.t("schedule_next")).font(.system(size: 13)).foregroundStyle(neu.textMuted)
+                Text(waitText).font(.system(size: 15, weight: .bold)).foregroundStyle(neu.blueOnBg)
+            }
+            Spacer(minLength: 0)
+            Text(Format.clock(minute))
+                .font(.system(size: 26, weight: .heavy))
+                .foregroundStyle(neu.text)
+                .lineLimit(1)
+                .fixedSize()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
+        .neuInset(Shapes.inset, distance: 3)
     }
 }
 

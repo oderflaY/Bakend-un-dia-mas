@@ -120,6 +120,12 @@
 "offline_banner" = "Offline, showing last known location";
 "schedule_title" = "Official schedule";
 "schedule_none" = "No published schedule";
+"schedule_next" = "Next departure";
+"schedule_later" = "Later";
+"schedule_now" = "Leaving now";
+"schedule_in_minutes" = "in %1$ld min";
+"schedule_in_hours" = "in %1$ld h %2$ld min";
+"schedule_in_hours_exact" = "in %1$ld h";
 "countdown_next_bus#one" = "Next bus in %1$ld minute";
 "countdown_next_bus#other" = "Next bus in %1$ld minutes";
 "countdown_none" = "No buses with a ramp on the way";

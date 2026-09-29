@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -44,6 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -51,44 +54,48 @@ import androidx.compose.ui.unit.sp
 import com.eter.rutacree.map.MapContent
 import com.eter.rutacree.map.PlatformMap
 import com.eter.rutacree.map.rememberAnimatedBuses
-import com.eter.rutacree.transit.AppConfig
 import com.eter.rutacree.platform.LocalDeviceServices
+import com.eter.rutacree.transit.AppConfig
 import com.eter.rutacree.transit.Arrival
 import com.eter.rutacree.transit.Compass
 import com.eter.rutacree.transit.Maneuver
-import com.eter.rutacree.transit.WalkGuide
 import com.eter.rutacree.transit.Stop
 import com.eter.rutacree.transit.TransitRoute
 import com.eter.rutacree.transit.TransitUiState
+import com.eter.rutacree.transit.WalkGuide
 import com.eter.rutacree.transit.formatClock
+import com.eter.rutacree.transit.minutesUntil
 import com.eter.rutacree.transit.nextDepartures
 import com.eter.rutacree.ui.AppIcons
 import com.eter.rutacree.ui.CardShape
 import com.eter.rutacree.ui.InsetShape
 import com.eter.rutacree.ui.MintChip
-import com.eter.rutacree.ui.StatusBanner
 import com.eter.rutacree.ui.Neu
 import com.eter.rutacree.ui.NeuButton
 import com.eter.rutacree.ui.NeuIconButton
-import com.eter.rutacree.ui.formatDistance
-import com.eter.rutacree.ui.formatMinutes
-import com.eter.rutacree.ui.stepInstruction
 import com.eter.rutacree.ui.PillShape
+import com.eter.rutacree.ui.StatusBanner
 import com.eter.rutacree.ui.busName
 import com.eter.rutacree.ui.distanceText
+import com.eter.rutacree.ui.formatDistance
+import com.eter.rutacree.ui.formatMinutes
 import com.eter.rutacree.ui.neuCard
 import com.eter.rutacree.ui.neuInset
 import com.eter.rutacree.ui.neuInsetShadow
+import com.eter.rutacree.ui.stepInstruction
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import rutacree.shared.generated.resources.Res
 import rutacree.shared.generated.resources.action_change_stop
+import rutacree.shared.generated.resources.action_choose_stop
 import rutacree.shared.generated.resources.action_collapse_details
 import rutacree.shared.generated.resources.action_expand_details
-import rutacree.shared.generated.resources.action_choose_stop
 import rutacree.shared.generated.resources.action_open_profile
 import rutacree.shared.generated.resources.action_show_route
+import rutacree.shared.generated.resources.action_walk
+import rutacree.shared.generated.resources.action_walk_label
 import rutacree.shared.generated.resources.app_name
+import rutacree.shared.generated.resources.approach_in
 import rutacree.shared.generated.resources.arrival_distance
 import rutacree.shared.generated.resources.arrival_headline
 import rutacree.shared.generated.resources.badge_live
@@ -97,25 +104,6 @@ import rutacree.shared.generated.resources.cd_badge_live
 import rutacree.shared.generated.resources.cd_badge_simulated
 import rutacree.shared.generated.resources.cd_map
 import rutacree.shared.generated.resources.cd_open_profile
-import rutacree.shared.generated.resources.countdown_next_bus
-import rutacree.shared.generated.resources.countdown_none
-import rutacree.shared.generated.resources.offline_banner
-import rutacree.shared.generated.resources.schedule_none
-import rutacree.shared.generated.resources.schedule_title
-import rutacree.shared.generated.resources.geofence_inside
-import rutacree.shared.generated.resources.geofence_nearest
-import rutacree.shared.generated.resources.geofence_no_gps
-import rutacree.shared.generated.resources.error_routes
-import rutacree.shared.generated.resources.loading_routes
-import rutacree.shared.generated.resources.no_arrival
-import rutacree.shared.generated.resources.ramp_operational
-import rutacree.shared.generated.resources.stop_change
-import rutacree.shared.generated.resources.stop_close
-import rutacree.shared.generated.resources.stop_label
-import rutacree.shared.generated.resources.stop_none
-import rutacree.shared.generated.resources.action_walk
-import rutacree.shared.generated.resources.action_walk_label
-import rutacree.shared.generated.resources.approach_in
 import rutacree.shared.generated.resources.compass_east
 import rutacree.shared.generated.resources.compass_north
 import rutacree.shared.generated.resources.compass_north_east
@@ -124,6 +112,28 @@ import rutacree.shared.generated.resources.compass_south
 import rutacree.shared.generated.resources.compass_south_east
 import rutacree.shared.generated.resources.compass_south_west
 import rutacree.shared.generated.resources.compass_west
+import rutacree.shared.generated.resources.countdown_next_bus
+import rutacree.shared.generated.resources.countdown_none
+import rutacree.shared.generated.resources.error_routes
+import rutacree.shared.generated.resources.geofence_inside
+import rutacree.shared.generated.resources.geofence_nearest
+import rutacree.shared.generated.resources.geofence_no_gps
+import rutacree.shared.generated.resources.loading_routes
+import rutacree.shared.generated.resources.no_arrival
+import rutacree.shared.generated.resources.offline_banner
+import rutacree.shared.generated.resources.ramp_operational
+import rutacree.shared.generated.resources.schedule_in_hours
+import rutacree.shared.generated.resources.schedule_in_hours_exact
+import rutacree.shared.generated.resources.schedule_in_minutes
+import rutacree.shared.generated.resources.schedule_later
+import rutacree.shared.generated.resources.schedule_next
+import rutacree.shared.generated.resources.schedule_none
+import rutacree.shared.generated.resources.schedule_now
+import rutacree.shared.generated.resources.schedule_title
+import rutacree.shared.generated.resources.stop_change
+import rutacree.shared.generated.resources.stop_close
+import rutacree.shared.generated.resources.stop_label
+import rutacree.shared.generated.resources.stop_none
 import rutacree.shared.generated.resources.walk_heading
 import rutacree.shared.generated.resources.walk_summary
 
@@ -478,19 +488,70 @@ private fun Schedule(stop: Stop, nowMinuteOfDay: Int) {
         )
         if (departures.isEmpty()) {
             Text(stringResource(Res.string.schedule_none), fontSize = 15.sp, color = Neu.TextMuted)
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                departures.forEach { minute ->
+            return@Column
+        }
+        NextDeparture(departures.first(), nowMinuteOfDay)
+        val later = departures.drop(1)
+        if (later.isNotEmpty()) {
+            Text(
+                stringResource(Res.string.schedule_later),
+                fontSize = 13.sp,
+                color = Neu.TextMuted,
+                modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
+            )
+            // Even columns that wrap to a new line instead of squeezing when the text is large.
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = later.size,
+            ) {
+                later.forEach { minute ->
                     Text(
                         formatClock(minute),
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = Neu.Text,
-                        modifier = Modifier.neuInset(PillShape, 3.dp).padding(horizontal = 12.dp, vertical = 8.dp),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier
+                            .weight(1f)
+                            .widthIn(min = 72.dp)
+                            .neuInset(PillShape, 3.dp)
+                            .padding(vertical = 8.dp),
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NextDeparture(minute: Int, nowMinuteOfDay: Int) {
+    val wait = minutesUntil(minute, nowMinuteOfDay)
+    val waitText = when {
+        wait == 0 -> stringResource(Res.string.schedule_now)
+        wait < 60 -> stringResource(Res.string.schedule_in_minutes, wait)
+        wait % 60 == 0 -> stringResource(Res.string.schedule_in_hours_exact, wait / 60)
+        else -> stringResource(Res.string.schedule_in_hours, wait / 60, wait % 60)
+    }
+    Row(
+        Modifier.fillMaxWidth().neuInset(InsetShape, 3.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(Res.string.schedule_next), fontSize = 13.sp, color = Neu.TextMuted)
+            Text(waitText, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Neu.BlueStrong)
+        }
+        Text(
+            formatClock(minute),
+            fontSize = 26.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Neu.Text,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.padding(start = 12.dp),
+        )
     }
 }
 

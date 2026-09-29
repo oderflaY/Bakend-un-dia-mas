@@ -117,4 +117,11 @@ class TransitTest {
         assertEquals(listOf(22 * 60, 5 * 60 + 30), stop.nextDepartures(21 * 60 + 59, count = 2))
         assertEquals("05:30", formatClock(5 * 60 + 30))
     }
+
+    @Test
+    fun minutesUntilCountsIntoTomorrow() {
+        assertEquals(0, minutesUntil(12 * 60, 12 * 60))
+        assertEquals(12, minutesUntil(12 * 60 + 12, 12 * 60))
+        assertEquals(6 * 60 + 90, minutesUntil(5 * 60 + 30, 22 * 60))
+    }
 }

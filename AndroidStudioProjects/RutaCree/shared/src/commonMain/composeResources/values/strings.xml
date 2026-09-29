@@ -146,6 +146,12 @@
     <!-- Parada, horarios y contador -->
     <string name="schedule_title">Horarios oficiales</string>
     <string name="schedule_none">Sin horarios publicados</string>
+    <string name="schedule_next">Próxima salida</string>
+    <string name="schedule_later">Después</string>
+    <string name="schedule_now">Saliendo ahora</string>
+    <string name="schedule_in_minutes">en %1$d min</string>
+    <string name="schedule_in_hours">en %1$d h %2$d min</string>
+    <string name="schedule_in_hours_exact">en %1$d h</string>
     <plurals name="countdown_next_bus">
         <item quantity="one">Próximo camión en %1$d minuto</item>
         <item quantity="other">Próximo camión en %1$d minutos</item>

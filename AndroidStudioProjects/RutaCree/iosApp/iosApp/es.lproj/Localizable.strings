@@ -120,6 +120,12 @@
 "offline_banner" = "Sin conexión, mostrando última ubicación conocida";
 "schedule_title" = "Horarios oficiales";
 "schedule_none" = "Sin horarios publicados";
+"schedule_next" = "Próxima salida";
+"schedule_later" = "Después";
+"schedule_now" = "Saliendo ahora";
+"schedule_in_minutes" = "en %1$ld min";
+"schedule_in_hours" = "en %1$ld h %2$ld min";
+"schedule_in_hours_exact" = "en %1$ld h";
 "countdown_next_bus#one" = "Próximo camión en %1$ld minuto";
 "countdown_next_bus#other" = "Próximo camión en %1$ld minutos";
 "countdown_none" = "Sin camiones con rampa en camino";

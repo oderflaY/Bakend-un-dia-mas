@@ -27,6 +27,9 @@ fun Stop.nextDepartures(nowMinuteOfDay: Int, count: Int = 4): List<Int> {
     return (upcoming + schedule).take(count)
 }
 
+/** Minutes from [nowMinuteOfDay] until [departure], counting into the next day when it already passed. */
+fun minutesUntil(departure: Int, nowMinuteOfDay: Int): Int = ((departure - nowMinuteOfDay) % 1440 + 1440) % 1440
+
 fun formatClock(minuteOfDay: Int): String {
     val m = ((minuteOfDay % 1440) + 1440) % 1440
     return "${(m / 60).toString().padStart(2, '0')}:${(m % 60).toString().padStart(2, '0')}"

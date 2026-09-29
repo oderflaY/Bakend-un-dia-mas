@@ -134,6 +134,12 @@
 
     <string name="schedule_title">Official schedule</string>
     <string name="schedule_none">No published schedule</string>
+    <string name="schedule_next">Next departure</string>
+    <string name="schedule_later">Later</string>
+    <string name="schedule_now">Leaving now</string>
+    <string name="schedule_in_minutes">in %1$d min</string>
+    <string name="schedule_in_hours">in %1$d h %2$d min</string>
+    <string name="schedule_in_hours_exact">in %1$d h</string>
     <plurals name="countdown_next_bus">
         <item quantity="one">Next bus in %1$d minute</item>
         <item quantity="other">Next bus in %1$d minutes</item>
