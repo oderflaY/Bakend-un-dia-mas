@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RutaCree</string>
+
+    <!-- Navegación -->
+    <string name="tab_radar">Radar</string>
+    <string name="tab_ramp">Rampa</string>
+    <string name="tab_reports">Reportes</string>
+    <string name="tab_profile">Perfil</string>
+
+    <!-- Unidades y datos -->
+    <string name="distance_meters">%1$d m</string>
+    <string name="distance_km">%1$s km</string>
+    <string name="bus_unit">Unidad %1$s</string>
+
+    <!-- Dashboard -->
+    <string name="cd_open_profile">Abrir tu perfil de accesibilidad</string>
+    <string name="action_open_profile">abrir tu perfil</string>
+    <string name="action_show_route">mostrar esta ruta en el mapa</string>
+    <string name="badge_live">En vivo</string>
+    <string name="badge_simulated">Simulación</string>
+    <string name="cd_badge_live">Posiciones de los camiones en vivo</string>
+    <string name="cd_badge_simulated">Posiciones simuladas: aún no hay servidor conectado</string>
+    <plurals name="cd_map">
+        <item quantity="one">Mapa de %1$s. Hay %2$d camión con rampa en la ruta.</item>
+        <item quantity="other">Mapa de %1$s. Hay %2$d camiones con rampa en la ruta.</item>
+    </plurals>
+    <string name="loading_routes">Cargando rutas…</string>
+    <string name="error_routes">No se pudieron cargar las rutas. Revisa tu conexión.</string>
+    <string name="arrival_headline">Llegando a %1$s en %2$d min</string>
+    <string name="arrival_distance">(%1$s)</string>
+    <string name="no_arrival">No hay camiones con rampa acercándose a %1$s</string>
+    <string name="ramp_operational">Rampa operativa</string>
+    <string name="stop_label">Tu parada: %1$s</string>
+    <string name="stop_none">elige una</string>
+    <string name="stop_change">Cambiar</string>
+    <string name="stop_close">Cerrar</string>
+    <string name="action_change_stop">cambiar tu parada</string>
+    <string name="action_choose_stop">elegir esta parada</string>
+
+    <!-- Asistencia y geocercas -->
+    <string name="assistance_title">Solicitar abordaje</string>
+    <string name="geofence_inside">Estás en: %1$s</string>
+    <string name="geofence_nearest">Parada más cercana: %1$s, a %2$s</string>
+    <string name="geofence_no_gps">Tu parada: %1$s</string>
+    <string name="geofence_none">Elige tu parada en el Radar</string>
+    <string name="ramp_request">Solicitar Rampa</string>
+    <string name="ramp_requested">Rampa solicitada</string>
+    <string name="cd_ramp_button">Solicitar rampa al chofer de la próxima unidad</string>
+    <string name="cd_ramp_button_sent">Solicitud de rampa enviada al chofer</string>
+    <string name="action_request_ramp">solicitar la rampa</string>
+    <string name="status_sending">Enviando señal al chofer…</string>
+    <string name="status_notified">Chofer notificado. Prepárese.</string>
+    <string name="cancel_request">Cancelar solicitud</string>
+    <string name="action_cancel_request">cancelar la solicitud de rampa</string>
+
+    <!-- Perfil -->
+    <string name="profile_title">Mi perfil</string>
+    <string name="profile_subtitle">La app y el chofer se adaptan a tus necesidades</string>
+    <string name="section_basic">Datos básicos</string>
+    <string name="field_name">Nombre</string>
+    <string name="field_name_hint">Escribe tu nombre</string>
+    <string name="user_type">Tipo de usuario</string>
+    <string name="user_type_rider">Pasajero</string>
+    <string name="user_type_companion">Acompañante</string>
+    <string name="section_favorites">Paradas favoritas</string>
+    <string name="favorite_home">Casa</string>
+    <string name="favorite_center">Centro</string>
+    <string name="favorite_therapy">Terapia</string>
+    <string name="favorite_hint">Ej. Parada 20 de Noviembre</string>
+    <string name="section_assistance">Asistencia que necesito</string>
+    <string name="assist_wheelchair">Silla de ruedas</string>
+    <string name="assist_wheelchair_desc">Avisa al chofer que baje la rampa.</string>
+    <string name="assist_low_vision">Debilidad visual</string>
+    <string name="assist_low_vision_desc">Lee en voz alta los tiempos del camión y vibra fuerte cuando esté a 1 minuto.</string>
+    <string name="assist_mobility">Movilidad reducida</string>
+    <string name="assist_mobility_desc">Andador o bastón: pide al chofer tiempo extra para subir antes de arrancar.</string>
+    <string name="save_profile">Guardar perfil</string>
+    <string name="action_save_profile">guardar tu perfil</string>
+    <string name="profile_saved">Perfil guardado</string>
+
+    <!-- Reportes -->
+    <string name="reports_title">Reportar un problema</string>
+    <string name="reports_detected">%1$s · %2$s · detectado por GPS</string>
+    <string name="reports_detected_route">%1$s · detectado por GPS</string>
+    <string name="section_quick_report">Reporte rápido</string>
+    <string name="report_ramp_broken">Rampa descompuesta</string>
+    <string name="report_no_stop">El chofer no paró</string>
+    <string name="report_full">Cupo lleno (no me subió)</string>
+    <string name="report_stop_blocked">Parada inaccesible o bloqueada</string>
+    <string name="report_comment">Comentarios (opcional)</string>
+    <string name="report_comment_hint">Describe lo que pasó…</string>
+    <string name="send_report">Enviar reporte</string>
+    <string name="action_send_report">enviar el reporte a Movilidad</string>
+    <string name="report_sent">Reporte enviado a Movilidad</string>
+
+    <!-- Tarjeta del radar -->
+    <string name="action_expand_details">ver detalles del camión y cambiar parada</string>
+    <string name="action_collapse_details">ocultar detalles y ver el mapa completo</string>
+
+    <!-- Ajustes de la app -->
+    <string name="section_app_settings">Ajustes de la app</string>
+    <string name="setting_theme">Tema</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="setting_language">Idioma</string>
+    <string name="language_system">Sistema</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English</string>
+
+    <!-- Selección de rol -->
+
+    <!-- Permisos -->
+    <string name="permissions_title">Permisos</string>
+    <string name="permissions_subtitle">Para ayudarte mejor, RutaCree necesita:</string>
+    <string name="perm_location">Ubicación exacta</string>
+    <string name="perm_location_desc_passenger">Para encontrar tu parada accesible más cercana y avisarte antes de bajar.</string>
+    <string name="perm_location_desc_driver">Para transmitir la posición del camión mientras manejas.</string>
+    <string name="perm_notifications">Notificaciones</string>
+    <string name="perm_notifications_desc">Para avisarte antes de tu parada, cuando el chofer confirme la rampa y si tu camión sufre un accidente o una avería, aunque tengas la pantalla apagada.</string>
+    <string name="perm_overlay">Mostrar sobre otras apps</string>
+    <string name="perm_overlay_desc">Para que la alerta de rampa aparezca aunque estés usando otra app.</string>
+    <string name="perm_notifications_desc_driver">Para que la alerta de rampa te llegue aunque la app esté en segundo plano.</string>
+    <string name="perm_denied_retry">Lo rechazaste. Toca Permitir para volver a intentarlo.</string>
+    <string name="perm_blocked_hint">Está desactivado. Actívalo en los ajustes del teléfono y regresa a RutaCree.</string>
+    <string name="perm_open_settings">Abrir ajustes</string>
+    <string name="action_open_settings">abrir los ajustes del teléfono para RutaCree</string>
+    <string name="perm_not_now">Ahora no</string>
+    <string name="action_not_now">seguir sin conceder el permiso</string>
+    <string name="notif_ramp_body">Abre RutaCree y toca «Entendido».</string>
+    <string name="notif_ramp_ack">El chofer confirmó tu rampa. Prepárate para abordar.</string>
+    <string name="perm_allow">Permitir</string>
+    <string name="perm_granted">Concedido</string>
+    <string name="perm_denied">Denegado. Puedes activarlo en los ajustes del sistema.</string>
+    <string name="action_allow_permission">conceder el permiso de %1$s</string>
+    <string name="perm_continue">Continuar</string>
+    <string name="action_continue">continuar a la app</string>
+    <string name="settings_permissions">Revisar permisos</string>
+    <string name="action_review_permissions">abrir la pantalla de permisos</string>
+    <string name="tab_settings">Ajustes</string>
+
+    <!-- Conexión -->
+    <string name="offline_banner">Sin conexión, mostrando última ubicación conocida</string>
+
+    <!-- Parada, horarios y contador -->
+    <string name="schedule_title">Horarios oficiales</string>
+    <string name="schedule_none">Sin horarios publicados</string>
+    <plurals name="countdown_next_bus">
+        <item quantity="one">Próximo camión en %1$d minuto</item>
+        <item quantity="other">Próximo camión en %1$d minutos</item>
+    </plurals>
+    <string name="countdown_none">Sin camiones con rampa en camino</string>
+
+    <!-- Modo Viaje -->
+    <string name="tab_trip">Viaje</string>
+    <string name="trip_title">Modo Viaje</string>
+    <string name="trip_subtitle">Te avisamos con voz y vibración antes de tu parada.</string>
+    <string name="trip_from">Subes en: %1$s</string>
+    <string name="trip_choose_destination">¿A qué parada vas?</string>
+    <string name="trip_no_destinations">No hay paradas accesibles después de la tuya en esta ruta.</string>
+    <string name="trip_start">Iniciar viaje</string>
+    <string name="action_start_trip">iniciar el modo viaje con aviso de bajada</string>
+    <string name="action_choose_destination">elegir esta parada como destino</string>
+    <string name="trip_destination">Destino: %1$s</string>
+    <string name="trip_distance">A %1$s de tu destino</string>
+    <string name="trip_waiting">Esperando tu ubicación…</string>
+    <string name="trip_stage_riding">En camino</string>
+    <string name="trip_stage_prepare">Prepárate para bajar</string>
+    <string name="trip_stage_arrived">Llegaste a tu parada</string>
+    <plurals name="trip_remaining_stops">
+        <item quantity="one">Queda %1$d parada</item>
+        <item quantity="other">Quedan %1$d paradas</item>
+    </plurals>
+    <string name="trip_stop_passed">ya pasó</string>
+    <string name="trip_stop_next">siguiente parada</string>
+    <string name="trip_stop_destination">tu destino</string>
+    <string name="trip_end">Terminar viaje</string>
+    <string name="action_end_trip">terminar el modo viaje</string>
+    <string name="tts_prepare_exit">Prepararse para bajar en la siguiente parada: %1$s</string>
+    <string name="tts_arrived">Has llegado a %1$s. Puedes bajar.</string>
+
+    <!-- Alerta de contingencia -->
+    <string name="incident_title_accident">Tu camión sufrió un accidente</string>
+    <string name="incident_title_breakdown">Tu camión tiene una avería</string>
+    <string name="incident_body_bus">La unidad %1$s no podrá continuar el recorrido.</string>
+    <string name="incident_body">El camión no podrá continuar el recorrido.</string>
+    <string name="incident_hint">Busca otra ruta accesible para llegar a tu destino.</string>
+    <string name="incident_alternatives">Ver rutas alternativas</string>
+    <string name="action_alternatives">buscar otra ruta que pase por tu parada</string>
+    <string name="incident_dismiss">Cerrar aviso</string>
+    <string name="action_dismiss_incident">cerrar el aviso</string>
+
+    <!-- Chofer: inicio de turno -->
+    <string name="driver_tab_shift">Turno</string>
+    <string name="driver_tab_reports">Reportes</string>
+    <string name="driver_assign_title">Inicio de turno</string>
+    <string name="driver_assign_subtitle">Escribe la unidad que manejas hoy y elige la ruta.</string>
+    <string name="driver_bus_number">Número económico</string>
+    <string name="driver_bus_number_hint">Ej. 245</string>
+    <string name="driver_route">Ruta del día</string>
+    <string name="driver_start">Iniciar ruta</string>
+    <string name="action_start_route">comenzar a transmitir tu posición en esta ruta</string>
+    <string name="driver_missing_fields">Escribe el número económico y elige la ruta.</string>
+    <string name="driver_last_end_completed">Turno cerrado correctamente.</string>
+    <string name="driver_last_end_emergency">Ruta cancelada por emergencia. Se avisó a los pasajeros.</string>
+
+    <!-- Chofer: consola -->
+    <string name="driver_console_title">Unidad %1$s</string>
+    <string name="driver_next_stops">Próximas paradas</string>
+    <string name="driver_no_stops">Fin del recorrido</string>
+    <string name="driver_accessible">Accesible</string>
+    <string name="driver_reporting_ok">Transmitiendo posición</string>
+    <string name="driver_reporting_off">Sin conexión con el servidor</string>
+    <string name="driver_simulated">Simulación: sin servidor configurado</string>
+    <string name="ramp_alert_title">PREPARAR RAMPA EN:</string>
+    <string name="ramp_alert_ack">Entendido</string>
+    <string name="action_ack_ramp">confirmar que prepararás la rampa</string>
+    <string name="cd_ramp_alert">Alerta: preparar rampa en %1$s</string>
+
+    <!-- Chofer: reportes y cierre -->
+    <string name="driver_reports_title">Reportes y cierre</string>
+    <string name="driver_no_shift">Inicia un turno para usar esta sección.</string>
+    <string name="panic_section">Emergencia</string>
+    <string name="panic_type_accident">Choque</string>
+    <string name="panic_type_breakdown">Falla mecánica</string>
+    <string name="panic_slider">Desliza para reportar y cancelar la ruta</string>
+    <string name="cd_panic_slider">Reportar %1$s y cancelar la ruta. Desliza a la derecha para confirmar.</string>
+    <string name="action_panic">reportar la emergencia y cancelar la ruta</string>
+    <string name="end_section">Cierre de turno</string>
+    <string name="end_shift">Finalizar ruta</string>
+    <string name="action_end_shift">finalizar la ruta</string>
+    <string name="end_confirm_title">¿Dónde queda la unidad?</string>
+    <string name="final_terminal">Terminal</string>
+    <string name="final_workshop">Taller de mantenimiento</string>
+    <string name="final_depot">Encierro</string>
+    <string name="end_confirm">Confirmar cierre</string>
+    <string name="action_confirm_end">confirmar el cierre de turno</string>
+    <string name="end_cancel">Volver</string>
+    <string name="action_cancel_end">volver sin cerrar el turno</string>
+
+    <!-- Backend: rampa, reportes y turno -->
+    <plurals name="status_waiting">
+        <item quantity="one">Señal enviada a %1$d chofer. Esperando su confirmación…</item>
+        <item quantity="other">Señal enviada a %1$d choferes. Esperando confirmación…</item>
+    </plurals>
+    <string name="status_waiting_no_drivers">Solicitud registrada. Aún no hay choferes de esta ruta en línea; se les avisará al conectarse.</string>
+    <string name="status_failed">No se pudo enviar la solicitud. Toca el botón para intentar de nuevo.</string>
+    <string name="report_failed">No se pudo enviar el reporte. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="driver_starting">Iniciando turno…</string>
+    <string name="driver_error_network">No hay conexión con el servidor.</string>
+    <string name="driver_error_rejected">El servidor no permitió iniciar el turno: %1$s</string>
+    <string name="driver_last_end_server">El servidor cerró el turno (venció, se inició en otro teléfono o lo cerró un administrador).</string>
+
+    <!-- Cuenta de pasajero -->
+    <string name="field_email">Correo electrónico</string>
+    <string name="field_email_hint">tu@correo.com</string>
+    <string name="field_password">Contraseña</string>
+    <string name="field_password_hint">Tu contraseña</string>
+    <string name="field_password_new_hint">Mínimo 8 caracteres</string>
+    <string name="login_submit_signin">Entrar</string>
+    <string name="login_submit_register">Crear mi cuenta</string>
+    <string name="action_signin">iniciar sesión con tu cuenta</string>
+    <string name="action_register">crear tu cuenta</string>
+    <string name="login_skip">Continuar sin cuenta</string>
+    <string name="action_skip">usar la app sin iniciar sesión</string>
+    <string name="login_busy">Conectando…</string>
+    <string name="err_invalid_credentials">Correo o contraseña incorrectos.</string>
+    <string name="err_locked">Demasiados intentos fallidos. Espera 15 minutos.</string>
+    <string name="err_email_taken">Ya existe una cuenta con ese correo. Inicia sesión.</string>
+    <string name="err_weak_password">La contraseña debe tener al menos 8 caracteres.</string>
+    <string name="err_invalid_email">Escribe un correo electrónico válido.</string>
+    <string name="err_missing_name">Escribe tu nombre.</string>
+    <string name="err_network">No hay conexión con el servidor. Intenta de nuevo.</string>
+    <string name="err_unknown">Algo salió mal. Intenta de nuevo.</string>
+    <string name="account_section">Cuenta</string>
+    <string name="account_signed_in">Sesión iniciada como %1$s</string>
+    <string name="account_anonymous">Estás usando la app sin cuenta. Tu perfil se guarda solo en este teléfono.</string>
+    <string name="account_signin_button">Iniciar sesión o crear cuenta</string>
+    <string name="action_open_login">abrir la pantalla de inicio de sesión</string>
+    <string name="account_signout">Cerrar sesión</string>
+    <string name="action_signout">cerrar tu sesión en este teléfono</string>
+    <string name="account_delete">Eliminar mi cuenta</string>
+    <string name="action_delete">eliminar tu cuenta y tus datos del servidor</string>
+    <string name="account_delete_confirm">¿Eliminar tu cuenta? Se borrarán tu perfil y tus paradas favoritas del servidor. No se puede deshacer.</string>
+    <string name="account_delete_yes">Sí, eliminar</string>
+    <string name="action_delete_yes">confirmar la eliminación de tu cuenta</string>
+    <string name="account_delete_no">Cancelar</string>
+    <string name="action_delete_no">conservar tu cuenta</string>
+    <string name="profile_save_failed">No se pudo guardar en el servidor. Revisa tu conexión.</string>
+
+    <!-- Chofer: rastreador Traccar -->
+    <string name="tracker_title">Ubicación de la unidad</string>
+    <string name="tracker_source_traccar">La envía Traccar Client desde este teléfono.</string>
+    <string name="tracker_ok">Última ubicación hace %1$d s</string>
+    <string name="tracker_source_app">La envía el GPS de esta app. Deja la pantalla encendida.</string>
+    <string name="tracker_no_position">No llega la ubicación desde hace %1$d s. Revisa que el GPS esté activado.</string>
+    <string name="tracker_waiting_any">Esperando la primera ubicación… Revisa que el GPS esté activado.</string>
+    <string name="tracker_setup_optional">Recomendado: con Traccar Client la ubicación sigue llegando con la pantalla apagada. Configúralo así:</string>
+    <string name="tracker_setup">Configura Traccar Client así:</string>
+    <string name="tracker_setup_id">Identificador del dispositivo: %1$s</string>
+    <string name="tracker_setup_url">URL del servidor: %1$s</string>
+    <string name="tracker_setup_frequency">Frecuencia: 5 segundos, y activa el servicio.</string>
+
+    <!-- Login unificado -->
+    <string name="login_signin_subtitle">Choferes y pasajeros entran aquí con su correo y contraseña.</string>
+    <string name="login_register_title">Crear cuenta de pasajero</string>
+    <string name="login_register_subtitle">Guarda tu perfil de accesibilidad y tus paradas favoritas en todos tus teléfonos.</string>
+    <string name="login_switch_to_register">¿Eres pasajero y no tienes cuenta? Crea una</string>
+    <string name="login_switch_to_signin">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="action_switch_to_register">cambiar a crear una cuenta de pasajero</string>
+    <string name="action_switch_to_signin">cambiar a iniciar sesión</string>
+    <string name="login_skip_hint">¿Solo quieres ver tu camión o pedir la rampa? No necesitas cuenta.</string>
+    <string name="login_demo_title">Modo demostración: no hay servidor configurado. Elige qué parte de la app quieres probar.</string>
+    <string name="login_demo_rider">Probar como pasajero</string>
+    <string name="login_demo_driver">Probar como chofer</string>
+    <string name="action_demo_rider">abrir la app de pasajero en modo demostración</string>
+    <string name="action_demo_driver">abrir la consola de chofer en modo demostración</string>
+    <string name="err_rate_limited">Demasiados intentos seguidos. Espera un momento e inténtalo de nuevo.</string>
+    <string name="err_session_expired">Tu sesión terminó. Vuelve a iniciar sesión.</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="driver_greeting">Hola, %1$s</string>
+    <string name="driver_role_label">Chofer · %1$s</string>
+    <string name="driver_signout_blocked">Termina tu turno en Reportes antes de cerrar sesión.</string>
+    <string name="driver_gps_waiting">Buscando señal GPS… Sal a cielo abierto y revisa que la ubicación esté activada.</string>
+    <string name="driver_on_route">En ruta</string>
+    <string name="approach_title">Dirígete a la ruta</string>
+    <string name="approach_join_stop">Incorpórate en %1$s</string>
+    <string name="approach_join_route">Incorpórate a la ruta</string>
+    <string name="approach_eta">%1$s · %2$s</string>
+    <string name="approach_straight">%1$s en línea recta</string>
+    <string name="approach_calculating">Calculando el camino por calles…</string>
+    <string name="approach_in">En %1$s</string>
+    <string name="approach_follow_line">Sigue la línea punteada</string>
+    <string name="approach_street">%1$s en %2$s</string>
+    <string name="distance_m">%1$d m</string>
+    <string name="duration_min">%1$d min</string>
+    <string name="maneuver_straight">Sigue derecho</string>
+    <string name="maneuver_slight_left">Gira ligeramente a la izquierda</string>
+    <string name="maneuver_left">Gira a la izquierda</string>
+    <string name="maneuver_sharp_left">Gira cerrado a la izquierda</string>
+    <string name="maneuver_slight_right">Gira ligeramente a la derecha</string>
+    <string name="maneuver_right">Gira a la derecha</string>
+    <string name="maneuver_sharp_right">Gira cerrado a la derecha</string>
+    <string name="maneuver_uturn">Da vuelta en U</string>
+    <string name="maneuver_roundabout">Toma la glorieta</string>
+    <string name="maneuver_arrive">Llegas a la parada</string>
+    <string name="action_navigate">Navegar</string>
+    <string name="action_navigate_label">abrir la navegación paso a paso</string>
+    <string name="cd_driver_map">Mapa con tu unidad y la ruta %1$s</string>
+    <string name="walk_heading">Camina hacia el %1$s</string>
+    <string name="walk_summary">%1$s · %2$s a pie hasta %3$s</string>
+    <string name="action_walk">Ir</string>
+    <string name="action_walk_label">abrir el camino a pie en la app de mapas</string>
+    <string name="compass_north">norte</string>
+    <string name="compass_north_east">noreste</string>
+    <string name="compass_east">este</string>
+    <string name="compass_south_east">sureste</string>
+    <string name="compass_south">sur</string>
+    <string name="compass_south_west">suroeste</string>
+    <string name="compass_west">oeste</string>
+    <string name="compass_north_west">noroeste</string>
+    <string name="tab_routes">Rutas</string>
+    <string name="routes_title">Rutas</string>
+    <string name="routes_subtitle">Elige una ruta para ver por dónde pasa y sus paradas.</string>
+    <string name="route_length">Recorrido de %1$s</string>
+    <plurals name="route_stops">
+        <item quantity="one">%1$d parada, %2$d accesible</item>
+        <item quantity="other">%1$d paradas, %2$d accesibles</item>
+    </plurals>
+    <string name="route_stops_title">Paradas del recorrido</string>
+    <string name="route_stop_accessible">con rampa</string>
+    <string name="route_stop_not_accessible">sin acceso para silla de ruedas</string>
+    <string name="route_stop_mine">tu parada</string>
+    <string name="action_use_route">Ver en el Radar</string>
+    <string name="action_use_route_label">usar esta ruta en el Radar</string>
+    <string name="action_choose_route_stop">mostrar en el mapa</string>
+    <string name="cd_route_map">Mapa del recorrido de %1$s, de %2$s a %3$s</string>
+</resources>

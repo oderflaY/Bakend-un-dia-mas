@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew clean *)",
+      "Bash(./gradlew build *)",
+      "Bash(./gradlew androidApp:build -x test)",
+      "Read(//home/oderflay/.gradle/caches/modules-2/files-2.1/**)",
+      "Bash(grep -E \"^ui$|ui-graphics\")"
+    ]
+  }
+}

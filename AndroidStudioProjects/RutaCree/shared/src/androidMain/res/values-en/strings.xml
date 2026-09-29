@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tracking_channel">Background location</string>
+    <string name="tracking_title">RutaCree is using your location</string>
+    <string name="tracking_text">To alert you before your stop or share the bus position, also with the screen off.</string>
+</resources>

@@ -1,690 +1,482 @@
 package com.eter.rutacree
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.Help
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eter.rutacree.account.AccountUiState
+import com.eter.rutacree.account.SessionKind
+import com.eter.rutacree.api.DriverAccount
+import com.eter.rutacree.driver.DriverSettingsScreen
+import com.eter.rutacree.settings.KeyValueStore
+import com.eter.rutacree.account.AccountViewModel
+import com.eter.rutacree.account.LoginScreen
+import com.eter.rutacree.platform.rememberSecureStore
+import com.eter.rutacree.driver.DriverReportsScreen
+import com.eter.rutacree.driver.DriverShiftScreen
+import com.eter.rutacree.driver.DriverViewModel
+import com.eter.rutacree.driver.RampAlertOverlay
+import com.eter.rutacree.platform.AppPermission
+import com.eter.rutacree.platform.DeviceServices
+import com.eter.rutacree.platform.LocalDeviceServices
+import com.eter.rutacree.platform.PermissionAction
+import com.eter.rutacree.platform.PermissionNeed
+import com.eter.rutacree.platform.PermissionStatus
+import com.eter.rutacree.platform.permissionAction
+import com.eter.rutacree.screens.PermissionAsker
+import com.eter.rutacree.screens.PermissionPromptDialog
+import com.eter.rutacree.transit.RampFlow
+import com.eter.rutacree.platform.rememberDeviceServices
+import com.eter.rutacree.screens.AssistanceScreen
+import com.eter.rutacree.screens.DashboardScreen
+import com.eter.rutacree.screens.IncidentDialog
+import com.eter.rutacree.screens.PermissionsScreen
+import com.eter.rutacree.screens.ProfileScreen
+import com.eter.rutacree.screens.ReportsScreen
+import com.eter.rutacree.screens.RoutesScreen
+import com.eter.rutacree.screens.SettingsSection
+import com.eter.rutacree.screens.TripScreen
+import com.eter.rutacree.screens.incidentTitle
+import com.eter.rutacree.settings.AppSettings
+import com.eter.rutacree.settings.ApplySystemTheme
+import com.eter.rutacree.settings.LocalAppLocale
+import com.eter.rutacree.settings.ThemeMode
+import com.eter.rutacree.settings.UserRole
+import com.eter.rutacree.settings.rememberKeyValueStore
+import com.eter.rutacree.transit.AppConfig
+import com.eter.rutacree.transit.TripAlert
+import com.eter.rutacree.transit.TransitViewModel
+import com.eter.rutacree.ui.AppIcons
+import com.eter.rutacree.ui.DarkNeuPalette
+import com.eter.rutacree.ui.LightNeuPalette
+import com.eter.rutacree.ui.LocalNeuPalette
+import com.eter.rutacree.ui.Neu
+import com.eter.rutacree.ui.ScreenHeader
+import com.eter.rutacree.ui.neuCard
+import com.eter.rutacree.ui.neuInset
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
+import rutacree.shared.generated.resources.Res
+import rutacree.shared.generated.resources.cd_ramp_alert
+import rutacree.shared.generated.resources.incident_hint
+import rutacree.shared.generated.resources.notif_ramp_ack
+import rutacree.shared.generated.resources.notif_ramp_body
+import rutacree.shared.generated.resources.ramp_requested
+import rutacree.shared.generated.resources.trip_title
+import rutacree.shared.generated.resources.driver_tab_reports
+import rutacree.shared.generated.resources.driver_tab_shift
+import rutacree.shared.generated.resources.tab_profile
+import rutacree.shared.generated.resources.tab_radar
+import rutacree.shared.generated.resources.tab_ramp
+import rutacree.shared.generated.resources.tab_reports
+import rutacree.shared.generated.resources.tab_routes
+import rutacree.shared.generated.resources.tab_settings
+import rutacree.shared.generated.resources.tab_trip
+import rutacree.shared.generated.resources.tts_arrived
+import rutacree.shared.generated.resources.tts_prepare_exit
+
+enum class Tab(val label: StringResource, val icon: ImageVector) {
+    Radar(Res.string.tab_radar, AppIcons.MapPin),
+    Rutas(Res.string.tab_routes, AppIcons.Navigate),
+    Rampa(Res.string.tab_ramp, AppIcons.Accessibility),
+    Viaje(Res.string.tab_trip, AppIcons.Bus),
+    Reportes(Res.string.tab_reports, AppIcons.Alert),
+    Perfil(Res.string.tab_profile, AppIcons.User),
+}
+
+enum class DriverTab(val label: StringResource, val icon: ImageVector) {
+    Turno(Res.string.driver_tab_shift, AppIcons.Bus),
+    Reportes(Res.string.driver_tab_reports, AppIcons.Alert),
+    Ajustes(Res.string.tab_settings, AppIcons.User),
+}
 
 @Composable
 @Preview
-fun App() {
-    val bgPrimary = Color(0xFFe6ecf5)
-    val accentMint = Color(0xFFA8E6CF)
-    val accentBlue = Color(0xFF8ECAE6)
-    val textPrimary = Color(0xFF2c3e50)
-    val textSecondary = Color(0xFF5a6c7d)
+fun App(config: AppConfig = AppConfig()) {
+    val store = rememberKeyValueStore()
+    val settings = remember(store) { AppSettings(store) }
+    val services = rememberDeviceServices()
+    val secureStore = rememberSecureStore()
+    val account = viewModel { AccountViewModel(config, secureStore, store) }
+    val session by account.state.collectAsStateWithLifecycle()
+    // Hoisted above the language key so switching language keeps the current screen.
+    var tab by remember { mutableStateOf(Tab.Radar) }
+    var driverTab by remember { mutableStateOf(DriverTab.Turno) }
+    var reviewingPermissions by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val permissionAsker = remember(services) { PermissionAsker(services, scope) }
 
-    var currentScreen by remember { mutableStateOf(Screen.DASHBOARD) }
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = bgPrimary
-    ) {
-        Box {
-            AnimatedVisibility(
-                visible = currentScreen == Screen.DASHBOARD,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                DashboardScreen(bgPrimary, accentMint, accentBlue, textPrimary, textSecondary)
+    CompositionLocalProvider(LocalAppLocale provides settings.language.tag) {
+        // Rebuild the tree when the language changes so every string resource is read again.
+        key(settings.language) {
+            val darkTheme = when (settings.theme) {
+                ThemeMode.System -> isSystemInDarkTheme()
+                ThemeMode.Light -> false
+                ThemeMode.Dark -> true
             }
-
-            AnimatedVisibility(
-                visible = currentScreen == Screen.ASSISTANCE,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                AssistanceScreen(bgPrimary, accentMint, accentBlue, textPrimary, textSecondary)
-            }
-
-            AnimatedVisibility(
-                visible = currentScreen == Screen.PROFILE,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                ProfileScreen(bgPrimary, accentMint, accentBlue, textPrimary, textSecondary)
-            }
-
-            AnimatedVisibility(
-                visible = currentScreen == Screen.REPORTS,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                ReportsScreen(bgPrimary, accentMint, accentBlue, textPrimary, textSecondary)
-            }
-
-            BottomNavigation(
-                currentScreen = currentScreen,
-                onScreenChange = { currentScreen = it },
-                bgPrimary = bgPrimary,
-                accentBlue = accentBlue,
-                textSecondary = textSecondary
-            )
-        }
-    }
-}
-
-enum class Screen {
-    DASHBOARD, ASSISTANCE, REPORTS, PROFILE
-}
-
-@Composable
-fun DashboardScreen(
-    bgPrimary: Color,
-    accentMint: Color,
-    accentBlue: Color,
-    textPrimary: Color,
-    textSecondary: Color
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 80.dp)
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = accentBlue,
-            shadowElevation = 8.dp
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .marginBottom(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            ApplySystemTheme(settings.theme, darkTheme)
+            MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
+                CompositionLocalProvider(
+                    LocalNeuPalette provides if (darkTheme) DarkNeuPalette else LightNeuPalette,
+                    LocalDeviceServices provides services,
                 ) {
-                    Text("RutaCree", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                        Icon(Icons.Default.Person, contentDescription = "Perfil", tint = Color.White, modifier = Modifier.size(20.dp))
-                    }
-                }
-                Text("Centro Histórico, Durango", fontSize = 13.sp, color = Color.White.copy(0.95f))
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(16.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .neomorphicInset(bgPrimary)
-                .background(Color(0xFFd8e7f5)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Mapa en vivo", fontSize = 14.sp, color = textSecondary)
-        }
-
-        RouteCard(accentMint, accentBlue, textPrimary, textSecondary, bgPrimary)
-    }
-}
-
-@Composable
-fun RouteCard(
-    accentMint: Color,
-    accentBlue: Color,
-    textPrimary: Color,
-    textSecondary: Color,
-    bgPrimary: Color
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 20.dp)
-            .neomorphicCard(bgPrimary)
-            .padding(16.dp)
-    ) {
-        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Outlined.LocationOn,
-                    contentDescription = "Autobús",
-                    tint = accentBlue,
-                    modifier = Modifier.size(36.dp)
-                )
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Ruta 2 - Blvd. Dolores del Río", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text("Unidad Adaptada", fontSize = 12.sp, color = Color(0xFF5a6c7d))
-                }
-                Surface(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(accentMint.copy(0.2f)),
-                    color = Color.Transparent
-                ) {
-                    Row(
-                        modifier = Modifier.padding(6.dp, 6.dp, 12.dp, 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("●", color = accentMint, fontSize = 8.sp)
-                        Text("Operativa", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = accentMint)
-                    }
-                }
-            }
-
-            Divider(color = Color(0xFFC5CBD5).copy(0.3f), thickness = 1.dp)
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("3", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = accentMint)
-                    Text("min", fontSize = 11.sp, color = Color(0xFF5a6c7d))
-                }
-                Text("1.2 km de distancia", fontSize = 13.sp, color = Color(0xFF5a6c7d))
-            }
-        }
-    }
-}
-
-@Composable
-fun AssistanceScreen(
-    bgPrimary: Color,
-    accentMint: Color,
-    accentBlue: Color,
-    textPrimary: Color,
-    textSecondary: Color
-) {
-    var isPressed by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 80.dp)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .neomorphicCard(bgPrimary)
-                .padding(12.dp, 8.dp, 12.dp, 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Estás en: Parada 20 de Noviembre", fontSize = 14.sp, color = textPrimary)
-        }
-
-        AnimatedVisibility(
-            visible = isPressed,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .neomorphicInset(bgPrimary)
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Enviando señal al chofer...", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = accentMint)
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("Solicitar Asistencia", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = textPrimary)
-            Text("Presiona el botón para pedir rampa", fontSize = 14.sp, color = textSecondary)
-
-            Box(
-                modifier = Modifier
-                    .size(200.dp)
-                    .clip(CircleShape)
-                    .then(
-                        if (isPressed) {
-                            Modifier.neomorphicInset(bgPrimary)
-                        } else {
-                            Modifier.neomorphicCard(bgPrimary)
+                    Box(Modifier.fillMaxSize().background(Neu.Bg).safeContentPadding()) {
+                        val permissions by services.permissions.collectAsStateWithLifecycle()
+                        // The role comes from the account the server recognized, never from a user toggle.
+                        val role = when (session.kind) {
+                            SessionKind.None -> null
+                            SessionKind.Driver -> UserRole.Driver
+                            SessionKind.Guest, SessionKind.Rider -> UserRole.Passenger
                         }
-                    )
-                    .clickable { isPressed = !isPressed }
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = "Rampa",
-                        tint = accentMint,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Text("Solicitar\nRampa", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary, textAlign = TextAlign.Center)
+                        val driverAccount = session.driver
+                        when {
+                            role == null -> LoginScreen(
+                                state = session,
+                                onSignIn = account::login,
+                                onRegister = account::register,
+                                onClearError = account::clearError,
+                                onContinueAsGuest = account::continueAsGuest,
+                                onDemoDriver = account::continueAsDemoDriver,
+                            )
+                            // Permissions are asked when a feature needs them; this screen is only a review.
+                            reviewingPermissions -> PermissionsScreen(
+                                role = role,
+                                statuses = permissions,
+                                onRequest = { permission ->
+                                    when (permissionAction(permissions[permission])) {
+                                        PermissionAction.AskSystem -> services.requestPermission(permission)
+                                        PermissionAction.OpenSettings -> services.openAppSettings()
+                                        PermissionAction.None -> Unit
+                                    }
+                                },
+                                onContinue = { reviewingPermissions = false },
+                            )
+                            role == UserRole.Driver && driverAccount != null -> DriverApp(
+                                config, settings, services, permissionAsker, store, driverAccount, driverTab, { driverTab = it },
+                                onSignOut = {
+                                    driverTab = DriverTab.Turno
+                                    account.signOut()
+                                },
+                                onSessionExpired = account::sessionExpired,
+                                onReviewPermissions = { reviewingPermissions = true },
+                            )
+                            else -> PassengerApp(
+                                config, settings, services, permissionAsker, tab, { tab = it },
+                                account = session,
+                                accountActions = account,
+                                onReviewPermissions = { reviewingPermissions = true },
+                            )
+                        }
+                        permissionAsker.prompt?.let { PermissionPromptDialog(it, permissionAsker::answer) }
+                    }
                 }
             }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = { isPressed = false },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .neomorphicCard(bgPrimary),
-            colors = ButtonDefaults.buttonColors(containerColor = bgPrimary)
-        ) {
-            Text("Cancelar", color = textSecondary, fontWeight = FontWeight.SemiBold)
         }
     }
 }
 
 @Composable
-fun ProfileScreen(
-    bgPrimary: Color,
-    accentMint: Color,
-    accentBlue: Color,
-    textPrimary: Color,
-    textSecondary: Color
+private fun PassengerApp(
+    config: AppConfig,
+    settings: AppSettings,
+    services: DeviceServices,
+    permissions: PermissionAsker,
+    tab: Tab,
+    onTabChange: (Tab) -> Unit,
+    account: AccountUiState,
+    accountActions: AccountViewModel,
+    onReviewPermissions: () -> Unit,
 ) {
-    var name by remember { mutableStateOf("Alfredo Valadez") }
-    var stop by remember { mutableStateOf("Parada 20 de Noviembre") }
-    val assistanceTypes = remember { mutableStateOf(mapOf(
-        "wheelchair" to true,
-        "vision" to false,
-        "mobility" to false,
-        "hearing" to false
-    )) }
+    val transit = viewModel { TransitViewModel(config) }
+    val state by transit.state.collectAsStateWithLifecycle()
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 100.dp)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        item {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Person, contentDescription = "Perfil", modifier = Modifier.size(32.dp))
-                Text("Mi Perfil", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
+    TrackDeviceLocation(services) { transit.updateUserLocation(it?.point) }
+
+    // Screens that locate the rider ask for location every time they open without it.
+    LaunchedEffect(tab) {
+        if (tab == Tab.Radar || tab == Tab.Rampa || tab == Tab.Viaje) permissions.ask(PermissionNeed.RiderLocation)
+    }
+
+    // Trip Mode: long vibration plus spoken alert, in the app's language.
+    LaunchedEffect(transit) {
+        transit.tripAlerts.collect { alert ->
+            val text = when (alert) {
+                is TripAlert.PrepareToExit -> getString(Res.string.tts_prepare_exit, alert.stop.name)
+                is TripAlert.Arrived -> getString(Res.string.tts_arrived, alert.stop.name)
             }
+            services.vibrateLong()
+            services.speak(text, settings.language.tag)
+            services.notify(getString(Res.string.trip_title), text, urgent = true)
         }
+    }
 
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("DATOS BÁSICOS", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textSecondary, letterSpacing = 0.5.sp)
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nombre completo") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .neomorphicInset(bgPrimary),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = bgPrimary,
-                        focusedContainerColor = bgPrimary,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedBorderColor = Color.Transparent
-                    )
+    // Trip mode warns before the stop also with the screen off.
+    val tripActive = state.trip != null
+    DisposableEffect(tripActive) {
+        services.keepTrackingInBackground(tripActive)
+        onDispose { services.keepTrackingInBackground(false) }
+    }
+
+    val rampAcknowledged = state.ramp.flow == RampFlow.Acknowledged
+    if (rampAcknowledged) {
+        LaunchedEffect(Unit) {
+            services.notify(getString(Res.string.ramp_requested), getString(Res.string.notif_ramp_ack))
+        }
+    }
+
+    val incident = state.incident
+    if (incident != null) {
+        val title = incidentTitle(incident)
+        LaunchedEffect(incident.id) {
+            services.vibrateLong()
+            services.speak(title, settings.language.tag)
+            services.notify(title, getString(Res.string.incident_hint), urgent = true)
+        }
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        Crossfade(tab, Modifier.weight(1f).fillMaxWidth()) { current ->
+            when (current) {
+                Tab.Radar -> DashboardScreen(
+                    config = config,
+                    state = state,
+                    onSelectRoute = transit::selectRoute,
+                    onSelectStop = transit::selectStop,
+                    onOpenProfile = { onTabChange(Tab.Perfil) },
                 )
-                OutlinedTextField(
-                    value = stop,
-                    onValueChange = { stop = it },
-                    label = { Text("Parada frecuente") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .neomorphicInset(bgPrimary),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = bgPrimary,
-                        focusedContainerColor = bgPrimary,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedBorderColor = Color.Transparent
-                    )
+                Tab.Rutas -> RoutesScreen(
+                    config = config,
+                    state = state,
+                    onShowOnRadar = { routeId, stopId ->
+                        transit.selectRoute(routeId)
+                        stopId?.let(transit::selectStop)
+                        onTabChange(Tab.Radar)
+                    },
                 )
-            }
-        }
-
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("TIPO DE ASISTENCIA", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textSecondary, letterSpacing = 0.5.sp)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    AssistanceToggle(
-                        label = "Silla de\nRuedas",
-                        isActive = assistanceTypes.value["wheelchair"] == true,
-                        onToggle = { assistanceTypes.value = assistanceTypes.value + ("wheelchair" to !assistanceTypes.value["wheelchair"]!!) },
-                        bgPrimary = bgPrimary,
-                        accentMint = accentMint,
-                        modifier = Modifier.weight(1f)
-                    )
-                    AssistanceToggle(
-                        label = "Visión",
-                        isActive = assistanceTypes.value["vision"] == true,
-                        onToggle = { assistanceTypes.value = assistanceTypes.value + ("vision" to !assistanceTypes.value["vision"]!!) },
-                        bgPrimary = bgPrimary,
-                        accentMint = accentMint,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    AssistanceToggle(
-                        label = "Movilidad",
-                        isActive = assistanceTypes.value["mobility"] == true,
-                        onToggle = { assistanceTypes.value = assistanceTypes.value + ("mobility" to !assistanceTypes.value["mobility"]!!) },
-                        bgPrimary = bgPrimary,
-                        accentMint = accentMint,
-                        modifier = Modifier.weight(1f)
-                    )
-                    AssistanceToggle(
-                        label = "Audición",
-                        isActive = assistanceTypes.value["hearing"] == true,
-                        onToggle = { assistanceTypes.value = assistanceTypes.value + ("hearing" to !assistanceTypes.value["hearing"]!!) },
-                        bgPrimary = bgPrimary,
-                        accentMint = accentMint,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-
-        item {
-            Button(
-                onClick = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .padding(top = 12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = accentBlue)
-            ) {
-                Text("Guardar Cambios", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
-fun AssistanceToggle(
-    label: String,
-    isActive: Boolean,
-    onToggle: () -> Unit,
-    bgPrimary: Color,
-    accentMint: Color,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .then(
-                if (isActive) {
-                    Modifier.neomorphicInset(bgPrimary)
-                } else {
-                    Modifier.neomorphicCard(bgPrimary)
-                }
-            )
-            .clickable { onToggle() }
-            .padding(12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(if (isActive) accentMint else Color(0xFFd0d8e0)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isActive) {
-                    Text("●", color = accentMint, fontSize = 20.sp)
-                }
-            }
-            Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-        }
-    }
-}
-
-@Composable
-fun ReportsScreen(
-    bgPrimary: Color,
-    accentMint: Color,
-    accentBlue: Color,
-    textPrimary: Color,
-    textSecondary: Color
-) {
-    var selectedReport by remember { mutableStateOf<String?>(null) }
-    var comment by remember { mutableStateOf("") }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 100.dp)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        item {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Outlined.Assessment, contentDescription = "Reportes", modifier = Modifier.size(32.dp))
-                Text("Reportar Problema", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
-            }
-        }
-
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .neomorphicCard(bgPrimary)
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Ruta: 2 | Unidad: 245 | Ubicación: Centro", fontSize = 12.sp, color = textSecondary)
-            }
-        }
-
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("SELECCIONA EL PROBLEMA", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textSecondary, letterSpacing = 0.5.sp)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    ReportButton("Rampa\nDescompuesta", selectedReport == "ramp", { selectedReport = "ramp" }, bgPrimary, accentMint, modifier = Modifier.weight(1f))
-                    ReportButton("El Chofer\nNo Paró", selectedReport == "driver", { selectedReport = "driver" }, bgPrimary, accentMint, modifier = Modifier.weight(1f))
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    ReportButton("Cupo\nLleno", selectedReport == "full", { selectedReport = "full" }, bgPrimary, accentMint, modifier = Modifier.weight(1f))
-                    ReportButton("Parada\nInaccesible", selectedReport == "access", { selectedReport = "access" }, bgPrimary, accentMint, modifier = Modifier.weight(1f))
-                }
-            }
-        }
-
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("DETALLES ADICIONALES", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textSecondary, letterSpacing = 0.5.sp)
-                OutlinedTextField(
-                    value = comment,
-                    onValueChange = { comment = it },
-                    placeholder = { Text("Cuéntanos más detalles...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .neomorphicInset(bgPrimary),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = bgPrimary,
-                        focusedContainerColor = bgPrimary,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedBorderColor = Color.Transparent
-                    )
+                Tab.Rampa -> AssistanceScreen(
+                    state,
+                    onRequestRamp = { permissions.ask(PermissionNeed.RampRequest, transit::requestRamp) },
+                    onCancel = transit::cancelRamp,
+                )
+                Tab.Viaje -> TripScreen(
+                    state,
+                    onStart = { stopId -> permissions.ask(PermissionNeed.TripAlerts) { transit.startTrip(stopId) } },
+                    onEnd = transit::endTrip,
+                )
+                Tab.Reportes -> ReportsScreen(state, onSend = transit::sendReport, onEdit = transit::resetReport)
+                Tab.Perfil -> ProfileScreen(
+                    settings = settings,
+                    account = account,
+                    onEdit = accountActions::editProfile,
+                    onSave = accountActions::saveProfile,
+                    onOpenLogin = accountActions::openLogin,
+                    onSignOut = {
+                        onTabChange(Tab.Radar)
+                        accountActions.signOut()
+                    },
+                    onDeleteAccount = accountActions::deleteAccount,
+                    onReviewPermissions = onReviewPermissions,
                 )
             }
         }
+        BottomBar(Tab.entries, tab, { it.label }, { it.icon }, onTabChange)
+    }
 
-        item {
-            Button(
-                onClick = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = accentBlue)
-            ) {
-                Text("Enviar Reporte", color = Color.White, fontWeight = FontWeight.Bold)
-            }
+    if (incident != null) {
+        IncidentDialog(
+            incident = incident,
+            onAlternatives = {
+                transit.showAlternativeRoutes()
+                onTabChange(Tab.Radar)
+            },
+            onDismiss = transit::dismissIncident,
+        )
+    }
+}
+
+@Composable
+private fun DriverApp(
+    config: AppConfig,
+    settings: AppSettings,
+    services: DeviceServices,
+    permissions: PermissionAsker,
+    store: KeyValueStore,
+    account: DriverAccount,
+    tab: DriverTab,
+    onTabChange: (DriverTab) -> Unit,
+    onSignOut: () -> Unit,
+    onSessionExpired: () -> Unit,
+    onReviewPermissions: () -> Unit,
+) {
+    // Keyed by login: signing in again (same or another driver) never reuses a console holding an old token.
+    val driver = viewModel(key = "driver-${account.driver.id}-${account.token.hashCode()}") {
+        DriverViewModel(config, account, store, onSessionExpired)
+    }
+    val state by driver.state.collectAsStateWithLifecycle()
+    val onShift = state.shift != null
+
+    if (onShift) TrackDeviceLocation(services) { driver.updateLocation(it?.point, it?.speedKmh ?: 0.0) }
+
+    // The console must stay readable while driving; released as soon as the shift ends.
+    DisposableEffect(onShift) {
+        services.keepScreenOn(onShift)
+        // The bus position keeps reaching riders even if the screen turns off.
+        services.keepTrackingInBackground(onShift)
+        onDispose {
+            services.keepScreenOn(false)
+            services.keepTrackingInBackground(false)
         }
     }
-}
 
-@Composable
-fun ReportButton(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    bgPrimary: Color,
-    accentMint: Color,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .then(
-                if (isSelected) {
-                    Modifier.neomorphicInset(bgPrimary)
-                } else {
-                    Modifier.neomorphicCard(bgPrimary)
+    val rampAlert = state.rampAlert
+    if (rampAlert != null) {
+        val spoken = stringResource(Res.string.cd_ramp_alert, rampAlert.stopName)
+        DisposableEffect(rampAlert.id) {
+            services.startAlarm()
+            services.vibrateLong()
+            onDispose { services.stopAlarm() }
+        }
+        LaunchedEffect(rampAlert.id) {
+            services.speak(spoken, settings.language.tag)
+            services.notify(spoken, getString(Res.string.notif_ramp_body), urgent = true)
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            Crossfade(tab, Modifier.weight(1f).fillMaxWidth()) { current ->
+                when (current) {
+                    DriverTab.Turno -> DriverShiftScreen(
+                        state = state,
+                        config = config,
+                        reportsToServer = config.isLive,
+                        onBusNumber = driver::updateBusNumber,
+                        onSelectRoute = driver::selectRoute,
+                        onStart = { permissions.ask(PermissionNeed.DriverShift, driver::startShift) },
+                    )
+                    DriverTab.Reportes -> DriverReportsScreen(
+                        state = state,
+                        onEmergency = {
+                            driver.reportEmergency(it)
+                            onTabChange(DriverTab.Turno)
+                        },
+                        onEndShift = {
+                            driver.endShift(it)
+                            onTabChange(DriverTab.Turno)
+                        },
+                    )
+                    DriverTab.Ajustes -> DriverSettingsScreen(
+                        driver = account.driver,
+                        onShift = onShift,
+                        settings = settings,
+                        onSignOut = onSignOut,
+                        onReviewPermissions = onReviewPermissions,
+                    )
                 }
-            )
-            .clickable { onClick() }
-            .padding(12.dp)
-            .heightIn(min = 80.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+            }
+            BottomBar(DriverTab.entries, tab, { it.label }, { it.icon }, onTabChange)
+        }
+        if (rampAlert != null) RampAlertOverlay(rampAlert, onAcknowledge = driver::acknowledgeRamp)
     }
 }
 
+/** Streams GPS fixes while location permission is granted. */
 @Composable
-fun BottomNavigation(
-    currentScreen: Screen,
-    onScreenChange: (Screen) -> Unit,
-    bgPrimary: Color,
-    accentBlue: Color,
-    textSecondary: Color
+private fun TrackDeviceLocation(services: DeviceServices, onFix: (com.eter.rutacree.platform.DeviceLocation?) -> Unit) {
+    val permissions by services.permissions.collectAsStateWithLifecycle()
+    val granted = permissions[AppPermission.Location] == PermissionStatus.Granted
+    DisposableEffect(granted) {
+        if (granted) services.startLocationUpdates()
+        onDispose { services.stopLocationUpdates() }
+    }
+    // Not lifecycle-bound: with the screen off, trip alerts and the bus position still need every fix.
+    val latestOnFix by rememberUpdatedState(onFix)
+    LaunchedEffect(services) { services.location.collect { latestOnFix(it) } }
+}
+
+@Composable
+private fun <T> BottomBar(
+    tabs: List<T>,
+    current: T,
+    label: (T) -> StringResource,
+    icon: (T) -> ImageVector,
+    onSelect: (T) -> Unit,
 ) {
-    NavigationBar(
-        modifier = Modifier
+    val itemShape = RoundedCornerShape(16.dp)
+    Row(
+        Modifier
             .fillMaxWidth()
-            .height(64.dp),
-        containerColor = bgPrimary,
-        windowInsets = WindowInsets.navigationBars
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .neuCard(RoundedCornerShape(24.dp), 6.dp)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        NavigationBarItem(
-            selected = currentScreen == Screen.DASHBOARD,
-            onClick = { onScreenChange(Screen.DASHBOARD) },
-            icon = { Icon(Icons.Outlined.LocationOn, contentDescription = "Radar") },
-            label = { Text("Radar", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = accentBlue,
-                selectedTextColor = accentBlue,
-                unselectedIconColor = textSecondary,
-                unselectedTextColor = textSecondary
-            )
-        )
-
-        NavigationBarItem(
-            selected = currentScreen == Screen.ASSISTANCE,
-            onClick = { onScreenChange(Screen.ASSISTANCE) },
-            icon = { Icon(Icons.Outlined.Help, contentDescription = "Ayuda") },
-            label = { Text("Ayuda", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = accentBlue,
-                selectedTextColor = accentBlue,
-                unselectedIconColor = textSecondary,
-                unselectedTextColor = textSecondary
-            )
-        )
-
-        NavigationBarItem(
-            selected = currentScreen == Screen.REPORTS,
-            onClick = { onScreenChange(Screen.REPORTS) },
-            icon = { Icon(Icons.Outlined.Assessment, contentDescription = "Reportes") },
-            label = { Text("Reportes", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = accentBlue,
-                selectedTextColor = accentBlue,
-                unselectedIconColor = textSecondary,
-                unselectedTextColor = textSecondary
-            )
-        )
-
-        NavigationBarItem(
-            selected = currentScreen == Screen.PROFILE,
-            onClick = { onScreenChange(Screen.PROFILE) },
-            icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
-            label = { Text("Perfil", fontSize = 11.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = accentBlue,
-                selectedTextColor = accentBlue,
-                unselectedIconColor = textSecondary,
-                unselectedTextColor = textSecondary
-            )
-        )
+        tabs.forEach { tab ->
+            val selected = tab == current
+            val color = if (selected) Neu.BlueStrong else Neu.TextMuted
+            Column(
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = 60.dp)
+                    .then(if (selected) Modifier.neuInset(itemShape, 3.dp) else Modifier)
+                    .clip(itemShape)
+                    // Role.Tab + selected lets TalkBack/VoiceOver announce "Radar, tab, selected, 1 of 5".
+                    .selectable(selected, role = Role.Tab) { onSelect(tab) }
+                    .padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Icon(icon(tab), null, tint = color, modifier = Modifier.size(24.dp))
+                Text(
+                    stringResource(label(tab)),
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    color = color,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
     }
 }
-
-fun Modifier.neomorphicCard(bgPrimary: Color) = this
-    .shadow(8.dp, RoundedCornerShape(16.dp), ambientColor = Color(0xFFC5CBD5), spotColor = Color(0xFFC5CBD5))
-    .shadow((-8).dp, RoundedCornerShape(16.dp), ambientColor = Color(0xFFFFFFFF), spotColor = Color(0xFFFFFFFF))
-    .background(bgPrimary, RoundedCornerShape(16.dp))
-
-fun Modifier.neomorphicInset(bgPrimary: Color) = this
-    .clip(RoundedCornerShape(12.dp))
-    .background(bgPrimary)
-    .shadow(4.dp, RoundedCornerShape(12.dp), ambientColor = Color(0xFFC5CBD5), spotColor = Color(0xFFC5CBD5), clip = false)
-
-fun Modifier.marginBottom(dp: Dp) = this.padding(bottom = dp)

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tracking_channel">Ubicación en segundo plano</string>
+    <string name="tracking_title">RutaCree está usando tu ubicación</string>
+    <string name="tracking_text">Para avisarte antes de tu parada o transmitir la posición del camión, también con la pantalla apagada.</string>
+</resources>

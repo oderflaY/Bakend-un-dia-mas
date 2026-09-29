@@ -1,0 +1,2 @@
+/* System prompt texts (permissions). */
+"NSLocationWhenInUseUsageDescription" = "RutaCree uses your location to find your nearest accessible stop, guide you there on foot and alert you before your stop, also with the screen off during Trip Mode. Drivers use it to share the bus position during their shift.";

@@ -1,0 +1,2 @@
+/* Textos de los avisos del sistema (permisos). */
+"NSLocationWhenInUseUsageDescription" = "RutaCree usa tu ubicación para encontrar tu parada accesible más cercana, guiarte a pie hasta ella y avisarte antes de bajar, también con la pantalla apagada durante el Modo Viaje. Los choferes la usan para transmitir la posición del camión durante su turno.";

@@ -1,0 +1,10 @@
+TEAM_ID=
+
+PRODUCT_NAME=RutaCree
+PRODUCT_BUNDLE_IDENTIFIER=com.eter.rutacree.RutaCree$(TEAM_ID)
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
+
+// Server address: copy Secrets.xcconfig.example to Secrets.xcconfig (git-ignored).
+#include? "Secrets.xcconfig"
