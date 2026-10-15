@@ -253,6 +253,12 @@ final class PhoneServices: NSObject, CLLocationManagerDelegate {
         UIApplication.shared.open(url)
     }
 
+    /// Opens WhatsApp with the report written for dispatch (`phone` empty: WhatsApp asks for the chat).
+    func openWhatsApp(phone: String, text: String) {
+        guard let url = URL(string: DeviceServicesKt.whatsAppUrl(phone: phone, text: text)) else { return }
+        UIApplication.shared.open(url)
+    }
+
     /// Posted only while RutaCree is in the background: in the foreground the screen shows and speaks it.
     func notify(title: String, body: String) {
         guard UIApplication.shared.applicationState != .active, notificationStatus == .granted else { return }

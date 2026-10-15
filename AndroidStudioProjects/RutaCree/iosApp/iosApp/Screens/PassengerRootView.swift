@@ -92,7 +92,7 @@ struct IncidentAlert: View {
                     Text(title)
                         .font(.system(size: 24, weight: .heavy))
                         .foregroundStyle(neu.text)
-                    Text(incident.busName.map { L10n.t("incident_body_bus", $0) } ?? L10n.t("incident_body"))
+                    Text(Format.incidentBody(incident))
                         .font(.system(size: 17))
                         .foregroundStyle(neu.text)
                     Text(L10n.t("incident_hint"))

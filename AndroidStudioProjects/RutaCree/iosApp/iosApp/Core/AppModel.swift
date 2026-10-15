@@ -94,6 +94,13 @@ final class AppModel {
         language = value
     }
 
+    /// Saved municipio: nil if never picked, "" for all of them.
+    var savedMunicipality: String? { settings.municipality }
+
+    func updateMunicipality(_ value: String?) {
+        settings.updateMunicipality(value: value)
+    }
+
     func signOut() {
         account.signOut()
     }
@@ -131,6 +138,10 @@ final class PassengerSession {
         self.app = app
         self.host = host
         self.transit = transit
+        // A municipio picked in an earlier session wins over the GPS guess.
+        if let saved = app.savedMunicipality {
+            transit.selectMunicipality(municipality: saved.isEmpty ? nil : saved)
+        }
         state = transit.state.value as! TransitUiState
         watches = [
             NativeBridgeKt.watch(flow: transit.state) { [weak self] value in
@@ -179,6 +190,11 @@ final class PassengerSession {
         app.services.ask(.rampRequest) { [transit] in transit.requestRamp() }
     }
 
+    func selectMunicipality(_ municipality: String?) {
+        app.updateMunicipality(municipality)
+        transit.selectMunicipality(municipality: municipality)
+    }
+
     func startTrip(destinationStopId: String) {
         app.services.ask(.tripAlerts) { [transit] in transit.startTrip(destinationStopId: destinationStopId) }
     }
@@ -217,6 +233,7 @@ final class DriverConsole {
         token = account.token
         info = account.driver
         state = viewModel.state.value as! DriverUiState
+        municipality = app.savedMunicipality.flatMap { $0.isEmpty ? nil : $0 }
         watch = NativeBridgeKt.watch(flow: viewModel.state) { [weak self] value in
             guard let state = value as? DriverUiState else { return }
             MainActor.assumeIsolated { self?.update(state) }
@@ -225,19 +242,39 @@ final class DriverConsole {
 
     var onShift: Bool { state.shift != nil }
 
+    /// The driver's municipio (nil: all), shared with the rider side through the app settings.
+    var municipality: String? = nil
+
+    func selectMunicipality(_ value: String?) {
+        municipality = value
+        app.updateMunicipality(value)
+        // The chosen route must be one the driver can see.
+        let visible = state.routes.filter { $0.servesMunicipality(municipality: value) }
+        if !visible.contains(where: { $0.id == state.selectedRouteId }), let first = visible.first {
+            viewModel.selectRoute(id: first.id)
+        }
+    }
+
     private func update(_ new: DriverUiState) {
         let old = state
         state = new
         let services = app.services
 
         if (old.shift != nil) != (new.shift != nil) {
-            // The console must stay readable while driving, and keep reporting with the screen locked.
+            // Ramp alerts must be seen while driving.
             services.keepScreenOn(new.shift != nil)
-            if new.shift != nil {
+            // Demo: the phone's GPS is the bus position while the route is open, also with the screen off.
+            if new.shift != nil && app.config.driverPhoneTracking {
                 services.startLocationUpdates(for: "driver", background: true)
             } else {
                 services.stopLocationUpdates(for: "driver")
             }
+        }
+
+        // Every report (start, end, failures) opens WhatsApp once, ready to send to dispatch.
+        if let message = new.whatsApp, message.id != old.whatsApp?.id {
+            services.openWhatsApp(phone: message.phone, text: message.text)
+            viewModel.whatsAppOpened()
         }
 
         if let alert = new.rampAlert, alert.id != old.rampAlert?.id {
@@ -251,7 +288,7 @@ final class DriverConsole {
         }
     }
 
-    /// Location for the bus position, notifications for ramp alerts in the background.
+    /// Notifications for ramp alerts in the background.
     func startShift() {
         app.services.ask(.driverShift) { [viewModel] in viewModel.startShift() }
     }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
@@ -37,7 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.draw.innerShadow
@@ -176,6 +178,7 @@ fun NeuButton(
     shape: Shape = CardShape,
     color: Color = Neu.Bg,
     enabled: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
     content: @Composable RowScope.() -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -183,7 +186,11 @@ fun NeuButton(
     Row(
         modifier = modifier
             .defaultMinSize(minHeight = 56.dp)
-            .alpha(if (enabled) 1f else 0.5f)
+            // Fades each draw call instead of an offscreen layer, which would clip the shadows to a square.
+            .graphicsLayer {
+                alpha = if (enabled) 1f else 0.5f
+                compositingStrategy = CompositingStrategy.ModulateAlpha
+            }
             .then(
                 if (pressed) Modifier.background(color, shape).neuInsetShadow(shape)
                 else Modifier.neuCard(shape, 6.dp, color)
@@ -197,7 +204,7 @@ fun NeuButton(
                 role = Role.Button,
                 onClick = onClick,
             )
-            .padding(horizontal = 24.dp, vertical = 14.dp),
+            .padding(contentPadding),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
         content = content,

@@ -4,7 +4,7 @@ import com.eter.rutacree.FakeKeyValueStore
 import com.eter.rutacree.api.DriverAccount
 import com.eter.rutacree.api.DriverInfo
 import com.eter.rutacree.transit.AppConfig
-import com.eter.rutacree.transit.GeoPoint
+import com.eter.rutacree.api.Passengers
 import com.eter.rutacree.transit.IncidentType
 import com.eter.rutacree.transit.parseRouteGeoJson
 import java.io.File
@@ -44,17 +44,20 @@ class DriverViewModelTest {
         parseRouteGeoJson(File("src/commonMain/composeResources/files/routes/$it.geojson").readText())
     }
 
+    /** 07:30 when the shift starts; tests move it forward. */
+    private var minute = 7 * 60 + 30
+
     private fun viewModel(): DriverViewModel {
-        val vm = DriverViewModel(AppConfig(), account, store, onSessionExpired = {}, loadRoutes = { bundled })
+        val vm = DriverViewModel(AppConfig(), account, store, onSessionExpired = {}, loadRoutes = { bundled }, clock = { minute })
         scope.runCurrent()
         return vm
     }
 
     @Test
-    fun busNumberKeepsOnlyLettersAndDigits() {
+    fun busNumberKeepsOnlyLettersDigitsAndHyphens() {
         val vm = viewModel()
-        vm.updateBusNumber("24-5 ab!cdefgh")
-        assertEquals("245abcde", vm.state.value.busNumber)
+        vm.updateBusNumber("25-1451 ab!cdefghijklmn")
+        assertEquals("25-1451abcdefghi", vm.state.value.busNumber)
     }
 
     @Test
@@ -95,34 +98,74 @@ class DriverViewModelTest {
     }
 
     @Test
-    fun gpsFixPlacesTheBusAndListsTheNextStops() {
+    fun passengerCountsStayBetweenZeroAndTheLimit() {
         val vm = viewModel()
-        vm.updateBusNumber("245")
-        vm.startShift()
-        val route = vm.state.value.shift!!.route
-        val start = route.stops.first().point
-        vm.updateLocation(start, 20.0)
-
-        val state = vm.state.value
-        assertEquals(start, state.position)
-        assertNull(state.approach, "a bus at its first stop is on the route")
-        assertTrue(state.nextStops.isNotEmpty())
-        assertTrue(state.nextStops.size <= 3)
-        assertFalse(route.stops.first() in state.nextStops)
+        vm.changePassengers(PassengerKind.Men, -1)
+        repeat(3) { vm.changePassengers(PassengerKind.Men, 1) }
+        vm.changePassengers(PassengerKind.Women, 1)
+        repeat(DriverViewModel.MAX_PASSENGERS + 5) { vm.changePassengers(PassengerKind.Elderly, 1) }
+        assertEquals(Passengers(men = 3, women = 1, elderly = DriverViewModel.MAX_PASSENGERS), vm.state.value.passengers)
     }
 
     @Test
-    fun farFromTheRouteTheDriverIsGuidedBackToIt() {
+    fun startingTheRouteRecordsTheTimeAndPassengersAndOpensWhatsApp() {
+        val vm = viewModel()
+        vm.updateBusNumber("245")
+        repeat(4) { vm.changePassengers(PassengerKind.Men, 1) }
+        vm.changePassengers(PassengerKind.Women, 1)
+        repeat(2) { vm.changePassengers(PassengerKind.Disability, 1) }
+        vm.changePassengers(PassengerKind.Companions, 1)
+        vm.startShift()
+
+        val shift = assertNotNull(vm.state.value.shift)
+        assertEquals(7 * 60 + 30, shift.startMinute)
+        assertEquals(Passengers(men = 4, women = 1, disability = 2, companions = 1), shift.passengers)
+        val message = assertNotNull(vm.state.value.whatsApp)
+        assertTrue("Inicio de ruta" in message.text)
+        assertTrue("07:30" in message.text)
+        assertTrue("Usuarios: 5 (4 hombres, 1 mujeres)" in message.text, message.text)
+        assertTrue("Discapacidad: 2 · Adultos mayores: 0 · Embarazadas: 0 · Acompañantes: 1" in message.text, message.text)
+
+        // Opened once; it stays available to open again.
+        vm.whatsAppOpened()
+        assertNull(vm.state.value.whatsApp)
+        vm.resendWhatsApp()
+        val again = assertNotNull(vm.state.value.whatsApp)
+        assertEquals(message.text, again.text)
+        assertTrue(again.id != message.id, "a reopened message must be a new event")
+    }
+
+    @Test
+    fun endingTheRouteReportsStartEndAndDurationAndResetsTheCount() {
+        val vm = viewModel()
+        vm.updateBusNumber("245")
+        vm.changePassengers(PassengerKind.Women, 1)
+        vm.startShift()
+        minute = 9 * 60 + 5
+        vm.endShift(FinalLocation.Depot)
+
+        val text = assertNotNull(vm.state.value.whatsApp).text
+        assertTrue("Fin de ruta" in text)
+        assertTrue("Inicio: 07:30 · Fin: 09:05 (1 h 35 min)" in text, text)
+        assertTrue("encierro" in text)
+        assertEquals(Passengers(), vm.state.value.passengers)
+    }
+
+    @Test
+    fun aRampFailureIsReportedOnceAndTheRouteGoesOn() {
         val vm = viewModel()
         vm.updateBusNumber("245")
         vm.startShift()
-        val far = vm.state.value.shift!!.route.stops.first().point.let { GeoPoint(it.lat + 0.02, it.lon) }
-        vm.updateLocation(far, 0.0)
+        vm.whatsAppOpened()
 
-        val approach = assertNotNull(vm.state.value.approach)
-        assertFalse(approach.byStreet, "no street path until the router answers")
-        assertTrue(approach.remainingMeters > 1_000)
-        assertEquals(listOf(far, approach.target), approach.path)
+        vm.reportFailure(IncidentType.RampFailure)
+        val shift = assertNotNull(vm.state.value.shift, "a broken ramp doesn't end the route")
+        assertTrue(shift.rampFailureReported)
+        assertTrue("Falla de la rampa" in assertNotNull(vm.state.value.whatsApp).text)
+
+        vm.whatsAppOpened()
+        vm.reportFailure(IncidentType.RampFailure)
+        assertNull(vm.state.value.whatsApp, "reported twice")
     }
 
     @Test
@@ -136,9 +179,10 @@ class DriverViewModelTest {
 
         vm.startShift()
         assertNull(vm.state.value.lastShiftEnd)
-        vm.reportEmergency(IncidentType.Breakdown)
+        vm.reportFailure(IncidentType.Breakdown)
         assertNull(vm.state.value.shift)
         assertEquals(ShiftEnd.Emergency, vm.state.value.lastShiftEnd)
+        assertTrue("Falla del camión" in assertNotNull(vm.state.value.whatsApp).text)
     }
 
     @Test
@@ -146,7 +190,6 @@ class DriverViewModelTest {
         val vm = viewModel()
         vm.updateBusNumber("245")
         vm.startShift()
-        vm.updateLocation(vm.state.value.shift!!.route.stops.first().point, 0.0)
         // The demo sends one ramp request 20 s into the shift.
         scope.testScheduler.advanceTimeBy(21_000)
         scope.runCurrent()

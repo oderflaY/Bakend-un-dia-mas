@@ -14,7 +14,14 @@ struct RoutesView: View {
         let highlighted = route?.stops.first { $0.id == highlightedId }
         VStack(alignment: .leading, spacing: 0) {
             ScreenHeader(title: L10n.t("routes_title"), subtitle: L10n.t("routes_subtitle"))
-            RouteChips(routes: state.routes, selectedId: route?.id, showColor: true) { id in
+            RouteChips(
+                routes: state.routes,
+                selectedId: route?.id,
+                showColor: true,
+                municipalities: state.municipalities,
+                municipality: state.municipality,
+                onMunicipality: session.selectMunicipality
+            ) { id in
                 viewedId = id
                 // A stop from the previous route never stays highlighted.
                 highlightedId = nil

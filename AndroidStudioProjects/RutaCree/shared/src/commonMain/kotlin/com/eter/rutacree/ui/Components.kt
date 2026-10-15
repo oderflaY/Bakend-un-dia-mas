@@ -3,11 +3,13 @@ package com.eter.rutacree.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Icon
@@ -45,7 +47,10 @@ fun FieldLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** Mutually exclusive options: raised when available, sunk when chosen; read as a radio group. */
+/**
+ * Mutually exclusive options: raised when available, sunk when chosen; read as a radio group.
+ * Each option is as wide as its label; they wrap onto more rows instead of squeezing or cutting it.
+ */
 @Composable
 fun <T> NeuSegmented(
     options: List<T>,
@@ -54,17 +59,21 @@ fun <T> NeuSegmented(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    FlowRow(
+        modifier.fillMaxWidth().selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         options.forEach { option ->
             val isSelected = option == selected
             Box(
                 Modifier
-                    .weight(1f)
+                    .widthIn(min = 96.dp)
                     .heightIn(min = 56.dp)
                     .then(if (isSelected) Modifier.neuInset() else Modifier.neuCard(distance = 5.dp))
                     .clip(CardShape)
                     .selectable(isSelected, role = Role.RadioButton) { onSelect(option) }
-                    .padding(horizontal = 6.dp, vertical = 8.dp),
+                    .padding(horizontal = 18.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(

@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -65,6 +65,7 @@ import com.eter.rutacree.platform.PermissionStatus
 import com.eter.rutacree.platform.permissionAction
 import com.eter.rutacree.screens.PermissionAsker
 import com.eter.rutacree.screens.PermissionPromptDialog
+import com.eter.rutacree.transit.IncidentType
 import com.eter.rutacree.transit.RampFlow
 import com.eter.rutacree.platform.rememberDeviceServices
 import com.eter.rutacree.screens.AssistanceScreen
@@ -161,7 +162,7 @@ fun App(config: AppConfig = AppConfig()) {
                     LocalNeuPalette provides if (darkTheme) DarkNeuPalette else LightNeuPalette,
                     LocalDeviceServices provides services,
                 ) {
-                    Box(Modifier.fillMaxSize().background(Neu.Bg).safeContentPadding()) {
+                    Box(Modifier.fillMaxSize().background(Neu.Bg).safeDrawingPadding()) {
                         val permissions by services.permissions.collectAsStateWithLifecycle()
                         // The role comes from the account the server recognized, never from a user toggle.
                         val role = when (session.kind) {
@@ -231,6 +232,13 @@ private fun PassengerApp(
     val transit = viewModel { TransitViewModel(config) }
     val state by transit.state.collectAsStateWithLifecycle()
 
+    // A municipio picked in an earlier session wins over the GPS guess.
+    LaunchedEffect(transit) { settings.municipality?.let { transit.selectMunicipality(it.ifEmpty { null }) } }
+    val onSelectMunicipality: (String?) -> Unit = {
+        settings.updateMunicipality(it)
+        transit.selectMunicipality(it)
+    }
+
     TrackDeviceLocation(services) { transit.updateUserLocation(it?.point) }
 
     // Screens that locate the rider ask for location every time they open without it.
@@ -284,6 +292,7 @@ private fun PassengerApp(
                     onSelectRoute = transit::selectRoute,
                     onSelectStop = transit::selectStop,
                     onOpenProfile = { onTabChange(Tab.Perfil) },
+                    onSelectMunicipality = onSelectMunicipality,
                 )
                 Tab.Rutas -> RoutesScreen(
                     config = config,
@@ -293,6 +302,7 @@ private fun PassengerApp(
                         stopId?.let(transit::selectStop)
                         onTabChange(Tab.Radar)
                     },
+                    onSelectMunicipality = onSelectMunicipality,
                 )
                 Tab.Rampa -> AssistanceScreen(
                     state,
@@ -356,16 +366,26 @@ private fun DriverApp(
     val state by driver.state.collectAsStateWithLifecycle()
     val onShift = state.shift != null
 
-    if (onShift) TrackDeviceLocation(services) { driver.updateLocation(it?.point, it?.speedKmh ?: 0.0) }
-
-    // The console must stay readable while driving; released as soon as the shift ends.
+    // Ramp alerts must be seen while driving; released as soon as the shift ends.
     DisposableEffect(onShift) {
         services.keepScreenOn(onShift)
-        // The bus position keeps reaching riders even if the screen turns off.
-        services.keepTrackingInBackground(onShift)
-        onDispose {
-            services.keepScreenOn(false)
-            services.keepTrackingInBackground(false)
+        onDispose { services.keepScreenOn(false) }
+    }
+    // Demo: the phone's GPS is the bus position while the route is open, also with the screen off.
+    if (onShift && config.driverPhoneTracking) {
+        TrackDeviceLocation(services, driver::onPhoneLocation)
+        DisposableEffect(Unit) {
+            services.keepTrackingInBackground(true)
+            onDispose { services.keepTrackingInBackground(false) }
+        }
+    }
+
+    // Every report (start, end, failures) opens WhatsApp once, ready to send to dispatch.
+    val whatsApp = state.whatsApp
+    LaunchedEffect(whatsApp?.id) {
+        if (whatsApp != null) {
+            services.openWhatsApp(whatsApp.phone, whatsApp.text)
+            driver.whatsAppOpened()
         }
     }
 
@@ -389,17 +409,21 @@ private fun DriverApp(
                 when (current) {
                     DriverTab.Turno -> DriverShiftScreen(
                         state = state,
-                        config = config,
                         reportsToServer = config.isLive,
                         onBusNumber = driver::updateBusNumber,
                         onSelectRoute = driver::selectRoute,
+                        onPassengers = driver::changePassengers,
                         onStart = { permissions.ask(PermissionNeed.DriverShift, driver::startShift) },
+                        onResendWhatsApp = driver::resendWhatsApp,
+                        municipality = settings.municipality?.ifEmpty { null },
+                        onSelectMunicipality = settings::updateMunicipality,
                     )
                     DriverTab.Reportes -> DriverReportsScreen(
                         state = state,
-                        onEmergency = {
-                            driver.reportEmergency(it)
-                            onTabChange(DriverTab.Turno)
+                        onFailure = {
+                            driver.reportFailure(it)
+                            // A ramp failure keeps the route going: stay here to see it was reported.
+                            if (it != IncidentType.RampFailure) onTabChange(DriverTab.Turno)
                         },
                         onEndShift = {
                             driver.endShift(it)

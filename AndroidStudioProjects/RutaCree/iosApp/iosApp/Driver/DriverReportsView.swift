@@ -2,7 +2,8 @@ import Shared
 import SwiftUI
 import UIKit
 
-/// Emergency report (slide to confirm) and end of shift.
+/// Ramp failure (the route goes on), bus failure or crash (slide to confirm) and end of the route.
+/// Each one is saved on the server and opens WhatsApp for dispatch.
 struct DriverReportsView: View {
     @Environment(\.neu) private var neu
     let session: DriverConsole
@@ -20,7 +21,32 @@ struct DriverReportsView: View {
                     .font(.system(size: 18))
                     .foregroundStyle(neu.text)
                     .padding(.top, 20)
-            } else {
+            } else if let shift = session.state.shift {
+                SectionTitle(L10n.t("ramp_failure_section"))
+                if shift.rampFailureReported {
+                    MintChip(L10n.t("ramp_failure_done"))
+                } else {
+                    Text(L10n.t("ramp_failure_desc"))
+                        .font(.system(size: 16))
+                        .foregroundStyle(neu.textMuted)
+                    Button {
+                        session.viewModel.reportFailure(type: IncidentType.rampFailure)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "figure.roll")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundStyle(AlertColors.danger)
+                                .accessibilityHidden(true)
+                            Text(L10n.t("ramp_failure_button"))
+                                .font(.system(size: 19, weight: .bold))
+                                .foregroundStyle(neu.text)
+                        }
+                    }
+                    .buttonStyle(.neu(fill: nil, minHeight: 64))
+                    .accessibilityHint(L10n.t("action_ramp_failure"))
+                    .padding(.top, 12)
+                }
+
                 SectionTitle(L10n.t("panic_section"))
                 NeuSegmented(
                     options: [true, false],
@@ -34,7 +60,7 @@ struct DriverReportsView: View {
                     accessibilityText: L10n.t("cd_panic_slider", typeLabel),
                     actionLabel: L10n.t("action_panic")
                 ) {
-                    session.viewModel.reportEmergency(type: accident ? IncidentType.accident : IncidentType.breakdown)
+                    session.viewModel.reportFailure(type: accident ? IncidentType.accident : IncidentType.breakdown)
                     session.tab = .shift
                 }
                 .padding(.top, 20)

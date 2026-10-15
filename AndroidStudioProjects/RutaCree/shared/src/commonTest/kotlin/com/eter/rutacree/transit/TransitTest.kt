@@ -124,4 +124,31 @@ class TransitTest {
         assertEquals(12, minutesUntil(12 * 60 + 12, 12 * 60))
         assertEquals(6 * 60 + 90, minutesUntil(5 * 60 + 30, 22 * 60))
     }
+
+    @Test
+    fun routeWithoutReturnIsAllOutboundAndShownEverywhere() {
+        assertNull(route.returnStartIndex)
+        assertEquals(route.geometry.points, route.outbound)
+        assertTrue(route.inbound.isEmpty())
+        assertTrue(route.servesMunicipality("Lerdo"))
+    }
+
+    @Test
+    fun serverSplitsOutboundAndReturnAndTagsMunicipios() {
+        val loop = parseRouteGeoJson(
+            routeJson.replace(
+                "\"color\":\"#5FC79E\"",
+                "\"color\":\"#5FC79E\",\"municipios\":[\"Gómez Palacio\",\"Lerdo\"],\"regreso_desde\":1",
+            )
+        )
+        assertEquals(listOf("Gómez Palacio", "Lerdo"), loop.municipalities)
+        assertEquals(2, loop.outbound.size)
+        assertEquals(loop.outbound.last(), loop.inbound.first())
+        assertTrue(loop.servesMunicipality("Lerdo"))
+        assertTrue(!loop.servesMunicipality("Durango"))
+        assertTrue(loop.servesMunicipality(null))
+        // A rider in Gómez Palacio gets their own municipio; one in Durango city the nearest served one.
+        assertEquals("Gómez Palacio", municipalityAt(GeoPoint(25.5605, -103.4975), listOf(loop)))
+        assertEquals("Lerdo", municipalityAt(GeoPoint(24.0277, -104.6532), listOf(loop)))
+    }
 }

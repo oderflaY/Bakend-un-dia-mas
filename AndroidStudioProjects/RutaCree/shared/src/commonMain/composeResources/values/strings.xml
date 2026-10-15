@@ -27,6 +27,7 @@
     </plurals>
     <string name="loading_routes">Cargando rutas…</string>
     <string name="error_routes">No se pudieron cargar las rutas. Revisa tu conexión.</string>
+    <string name="no_routes">Todavía no hay rutas publicadas. Pronto aparecerán aquí.</string>
     <string name="arrival_headline">Llegando a %1$s en %2$d min</string>
     <string name="arrival_distance">(%1$s)</string>
     <string name="no_arrival">No hay camiones con rampa acercándose a %1$s</string>
@@ -201,23 +202,18 @@
     <string name="driver_tab_shift">Turno</string>
     <string name="driver_tab_reports">Reportes</string>
     <string name="driver_assign_title">Inicio de turno</string>
-    <string name="driver_assign_subtitle">Escribe la unidad que manejas hoy y elige la ruta.</string>
+    <string name="driver_assign_subtitle">Escribe la unidad que manejas hoy, elige la ruta y cuenta a los pasajeros.</string>
     <string name="driver_bus_number">Número económico</string>
     <string name="driver_bus_number_hint">Ej. 245</string>
     <string name="driver_route">Ruta del día</string>
     <string name="driver_start">Iniciar ruta</string>
-    <string name="action_start_route">comenzar a transmitir tu posición en esta ruta</string>
+    <string name="action_start_route">iniciar la ruta y abrir el aviso en WhatsApp</string>
     <string name="driver_missing_fields">Escribe el número económico y elige la ruta.</string>
-    <string name="driver_last_end_completed">Turno cerrado correctamente.</string>
+    <string name="driver_last_end_completed">Ruta terminada. Se registró la hora de fin.</string>
     <string name="driver_last_end_emergency">Ruta cancelada por emergencia. Se avisó a los pasajeros.</string>
 
     <!-- Chofer: consola -->
     <string name="driver_console_title">Unidad %1$s</string>
-    <string name="driver_next_stops">Próximas paradas</string>
-    <string name="driver_no_stops">Fin del recorrido</string>
-    <string name="driver_accessible">Accesible</string>
-    <string name="driver_reporting_ok">Transmitiendo posición</string>
-    <string name="driver_reporting_off">Sin conexión con el servidor</string>
     <string name="driver_simulated">Simulación: sin servidor configurado</string>
     <string name="ramp_alert_title">PREPARAR RAMPA EN:</string>
     <string name="ramp_alert_ack">Entendido</string>
@@ -227,9 +223,9 @@
     <!-- Chofer: reportes y cierre -->
     <string name="driver_reports_title">Reportes y cierre</string>
     <string name="driver_no_shift">Inicia un turno para usar esta sección.</string>
-    <string name="panic_section">Emergencia</string>
+    <string name="panic_section">Falla del camión o choque</string>
     <string name="panic_type_accident">Choque</string>
-    <string name="panic_type_breakdown">Falla mecánica</string>
+    <string name="panic_type_breakdown">Falla del camión</string>
     <string name="panic_slider">Desliza para reportar y cancelar la ruta</string>
     <string name="cd_panic_slider">Reportar %1$s y cancelar la ruta. Desliza a la derecha para confirmar.</string>
     <string name="action_panic">reportar la emergencia y cancelar la ruta</string>
@@ -296,17 +292,6 @@
     <string name="profile_save_failed">No se pudo guardar en el servidor. Revisa tu conexión.</string>
 
     <!-- Chofer: rastreador Traccar -->
-    <string name="tracker_title">Ubicación de la unidad</string>
-    <string name="tracker_source_traccar">La envía Traccar Client desde este teléfono.</string>
-    <string name="tracker_ok">Última ubicación hace %1$d s</string>
-    <string name="tracker_source_app">La envía el GPS de esta app. Deja la pantalla encendida.</string>
-    <string name="tracker_no_position">No llega la ubicación desde hace %1$d s. Revisa que el GPS esté activado.</string>
-    <string name="tracker_waiting_any">Esperando la primera ubicación… Revisa que el GPS esté activado.</string>
-    <string name="tracker_setup_optional">Recomendado: con Traccar Client la ubicación sigue llegando con la pantalla apagada. Configúralo así:</string>
-    <string name="tracker_setup">Configura Traccar Client así:</string>
-    <string name="tracker_setup_id">Identificador del dispositivo: %1$s</string>
-    <string name="tracker_setup_url">URL del servidor: %1$s</string>
-    <string name="tracker_setup_frequency">Frecuencia: 5 segundos, y activa el servicio.</string>
 
     <!-- Login unificado -->
     <string name="login_signin_subtitle">Choferes y pasajeros entran aquí con su correo y contraseña.</string>
@@ -329,16 +314,7 @@
     <string name="driver_greeting">Hola, %1$s</string>
     <string name="driver_role_label">Chofer · %1$s</string>
     <string name="driver_signout_blocked">Termina tu turno en Reportes antes de cerrar sesión.</string>
-    <string name="driver_gps_waiting">Buscando señal GPS… Sal a cielo abierto y revisa que la ubicación esté activada.</string>
-    <string name="driver_on_route">En ruta</string>
-    <string name="approach_title">Dirígete a la ruta</string>
-    <string name="approach_join_stop">Incorpórate en %1$s</string>
-    <string name="approach_join_route">Incorpórate a la ruta</string>
-    <string name="approach_eta">%1$s · %2$s</string>
-    <string name="approach_straight">%1$s en línea recta</string>
-    <string name="approach_calculating">Calculando el camino por calles…</string>
     <string name="approach_in">En %1$s</string>
-    <string name="approach_follow_line">Sigue la línea punteada</string>
     <string name="approach_street">%1$s en %2$s</string>
     <string name="distance_m">%1$d m</string>
     <string name="duration_min">%1$d min</string>
@@ -352,9 +328,6 @@
     <string name="maneuver_uturn">Da vuelta en U</string>
     <string name="maneuver_roundabout">Toma la glorieta</string>
     <string name="maneuver_arrive">Llegas a la parada</string>
-    <string name="action_navigate">Navegar</string>
-    <string name="action_navigate_label">abrir la navegación paso a paso</string>
-    <string name="cd_driver_map">Mapa con tu unidad y la ruta %1$s</string>
     <string name="walk_heading">Camina hacia el %1$s</string>
     <string name="walk_summary">%1$s · %2$s a pie hasta %3$s</string>
     <string name="action_walk">Ir</string>
@@ -383,4 +356,49 @@
     <string name="action_use_route_label">usar esta ruta en el Radar</string>
     <string name="action_choose_route_stop">mostrar en el mapa</string>
     <string name="cd_route_map">Mapa del recorrido de %1$s, de %2$s a %3$s</string>
+
+    <!-- Chofer: avisos por WhatsApp, conteo de pasajeros y falla de rampa -->
+    <string name="driver_passengers_title">Usuarios de esta vuelta</string>
+    <string name="passengers_men">Hombres</string>
+    <string name="passengers_women">Mujeres</string>
+    <string name="passengers_disability">Con discapacidad</string>
+    <string name="passengers_elderly">Adultos mayores</string>
+    <string name="passengers_pregnant">Embarazadas</string>
+    <string name="passengers_companions">Acompañantes</string>
+    <string name="driver_passengers_of_them">De esos %1$d usuarios, ¿cuántos son…?</string>
+    <string name="cd_passengers_count">%1$s: %2$d</string>
+    <string name="action_passengers_add">agregar uno a %1$s</string>
+    <string name="action_passengers_remove">quitar uno de %1$s</string>
+    <string name="driver_whatsapp_hint">Al iniciar, al terminar y al reportar una falla se abre WhatsApp con el aviso listo para el despacho: solo toca Enviar.</string>
+    <string name="driver_console_started">Ruta iniciada a las %1$s</string>
+    <string name="driver_console_passengers">%1$d usuarios · %2$d hombres · %3$d mujeres</string>
+    <string name="driver_console_categories">Discapacidad %1$d · Adultos mayores %2$d · Embarazadas %3$d · Acompañantes %4$d</string>
+    <string name="driver_console_gps">La ubicación la envía el GPS del camión.</string>
+    <string name="driver_console_reports_hint">Para reportar una falla o terminar la ruta, ve a Reportes.</string>
+    <string name="driver_console_ramp_reported">Reportaste la rampa como dañada.</string>
+    <string name="whatsapp_resend">Abrir otra vez el último aviso</string>
+    <string name="action_whatsapp_resend">abrir otra vez en WhatsApp el último aviso</string>
+    <string name="ramp_failure_section">Falla de la rampa</string>
+    <string name="ramp_failure_desc">La unidad sigue su ruta. Se avisa a los pasajeros que no hay rampa y el taller la revisa.</string>
+    <string name="ramp_failure_button">Reportar falla de rampa</string>
+    <string name="action_ramp_failure">reportar que la rampa no funciona</string>
+    <string name="ramp_failure_done">Falla de rampa reportada. Si no se envió el WhatsApp, ábrelo otra vez desde Turno.</string>
+    <string name="incident_title_ramp">La rampa de tu camión no funciona</string>
+    <string name="incident_body_ramp_bus">La unidad %1$s sigue su recorrido, pero no puede subir sillas de ruedas.</string>
+    <string name="incident_body_ramp">El camión sigue su recorrido, pero no puede subir sillas de ruedas.</string>
+    <string name="gps_phone_sending">Tu camión aparece en el mapa</string>
+    <string name="gps_phone_sending_hint">Este teléfono envía la ubicación cada 3 segundos. Puedes bloquear la pantalla.</string>
+    <string name="gps_phone_searching">Buscando señal GPS…</string>
+    <string name="gps_phone_searching_hint">Espera unos segundos; afuera del edificio se encuentra más rápido.</string>
+    <string name="gps_phone_no_signal">Sin señal GPS</string>
+    <string name="gps_phone_no_signal_hint">Revisa que la ubicación del teléfono esté encendida y permitida para RutaCree.</string>
+    <string name="gps_phone_no_connection">Sin internet</string>
+    <string name="gps_phone_no_connection_hint">El camión no se actualiza en el mapa; se reanuda solo cuando vuelva la conexión.</string>
+    <string name="municipality_label">Municipio</string>
+    <string name="municipality_all">Todos los municipios</string>
+    <string name="cd_municipality">Municipio: %1$s</string>
+    <string name="action_change_municipality">cambiar de municipio</string>
+    <string name="map_outbound">Ida</string>
+    <string name="map_inbound">Regreso</string>
+    <string name="cd_map_directions">En el mapa, la ida va en azul y el regreso en naranja.</string>
 </resources>

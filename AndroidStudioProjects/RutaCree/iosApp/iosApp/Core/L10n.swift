@@ -135,7 +135,17 @@ enum Format {
     }
 
     static func incidentTitle(_ incident: Incident) -> String {
-        L10n.t(incident.type.name == "Accident" ? "incident_title_accident" : "incident_title_breakdown")
+        switch incident.type.name {
+        case "Accident": return L10n.t("incident_title_accident")
+        case "RampFailure": return L10n.t("incident_title_ramp")
+        default: return L10n.t("incident_title_breakdown")
+        }
+    }
+
+    static func incidentBody(_ incident: Incident) -> String {
+        let ramp = incident.type.name == "RampFailure"
+        if let bus = incident.busName { return L10n.t(ramp ? "incident_body_ramp_bus" : "incident_body_bus", bus) }
+        return L10n.t(ramp ? "incident_body_ramp" : "incident_body")
     }
 
     /// "Ruta 2 - Centro" -> "Ruta 2".

@@ -14,7 +14,7 @@ enum class PermissionNeed(val permissions: List<AppPermission>) {
     /** Ramp request: which stop the rider is at, and the answer from the driver. */
     RampRequest(listOf(AppPermission.Location, AppPermission.Notifications)),
 
-    /** Driver shift: broadcast the bus position and ring ramp alerts over other apps. */
+    /** Driver shift: ring ramp alerts over other apps, and (demo) send the phone GPS as the bus position. */
     DriverShift(listOf(AppPermission.Location, AppPermission.Notifications, AppPermission.Overlay)),
 }
 

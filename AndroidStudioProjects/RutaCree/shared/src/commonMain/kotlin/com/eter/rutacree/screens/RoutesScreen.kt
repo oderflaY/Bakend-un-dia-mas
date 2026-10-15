@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.eter.rutacree.map.DirectionLegend
 import com.eter.rutacree.map.MapContent
 import com.eter.rutacree.map.PlatformMap
 import com.eter.rutacree.map.parseHexColor
@@ -52,6 +53,7 @@ import com.eter.rutacree.ui.CardShape
 import com.eter.rutacree.ui.InsetShape
 import com.eter.rutacree.ui.Neu
 import com.eter.rutacree.ui.NeuButton
+import com.eter.rutacree.ui.MunicipalityPicker
 import com.eter.rutacree.ui.PillShape
 import com.eter.rutacree.ui.ScreenHeader
 import com.eter.rutacree.ui.formatDistance
@@ -72,6 +74,7 @@ import rutacree.shared.generated.resources.route_stop_mine
 import rutacree.shared.generated.resources.route_stop_not_accessible
 import rutacree.shared.generated.resources.route_stops
 import rutacree.shared.generated.resources.route_stops_title
+import rutacree.shared.generated.resources.no_routes
 import rutacree.shared.generated.resources.routes_subtitle
 import rutacree.shared.generated.resources.routes_title
 
@@ -83,6 +86,7 @@ fun RoutesScreen(
     config: AppConfig,
     state: TransitUiState,
     onShowOnRadar: (routeId: String, stopId: String?) -> Unit,
+    onSelectMunicipality: (String?) -> Unit = {},
 ) {
     var viewedId by remember { mutableStateOf(state.route?.id) }
     val route = state.routes.firstOrNull { it.id == viewedId } ?: state.route ?: state.routes.firstOrNull()
@@ -92,8 +96,13 @@ fun RoutesScreen(
 
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         ScreenHeader(stringResource(Res.string.routes_title), stringResource(Res.string.routes_subtitle))
-        RouteChips(state.routes, route, onSelect = { viewedId = it })
-        if (route == null) return@Column
+        RouteChips(state, route, onSelect = { viewedId = it }, onSelectMunicipality = onSelectMunicipality)
+        if (route == null) {
+            if (state.noRoutes) {
+                Text(stringResource(Res.string.no_routes), fontSize = 16.sp, color = Neu.Text, modifier = Modifier.padding(top = 16.dp))
+            }
+            return@Column
+        }
 
         Box(Modifier.weight(1.1f).fillMaxWidth().padding(vertical = 8.dp)) {
             // Live buses are only followed for the Radar's route.
@@ -127,6 +136,7 @@ fun RoutesScreen(
                     .clearAndSetSemantics { contentDescription = description },
             )
             Box(Modifier.matchParentSize().neuInsetShadow(InsetShape, 6.dp))
+            DirectionLegend(route, Modifier.align(Alignment.TopEnd).padding(10.dp))
         }
 
         RouteDetails(
@@ -143,13 +153,19 @@ fun RoutesScreen(
 }
 
 @Composable
-private fun RouteChips(routes: List<TransitRoute>, current: TransitRoute?, onSelect: (String) -> Unit) {
+private fun RouteChips(
+    state: TransitUiState,
+    current: TransitRoute?,
+    onSelect: (String) -> Unit,
+    onSelectMunicipality: (String?) -> Unit,
+) {
     val showRoute = stringResource(Res.string.action_show_route)
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        routes.forEach { route ->
+        MunicipalityPicker(state.municipalities, state.municipality, onSelectMunicipality)
+        state.routes.forEach { route ->
             val selected = route.id == current?.id
             Row(
                 Modifier

@@ -99,19 +99,17 @@ class BackendContractTest {
 
     /** Needs a driver login: RUTACREE_TEST_DRIVER_EMAIL=… RUTACREE_TEST_DRIVER_PASSWORD=…. */
     @Test
-    fun driverSignsInWithTheSameLoginAndStartsATraccarShift() = live {
+    fun driverSignsInWithTheSameLoginAndStartsARoute() = live {
         val email = System.getenv("RUTACREE_TEST_DRIVER_EMAIL").orEmpty()
         val password = System.getenv("RUTACREE_TEST_DRIVER_PASSWORD").orEmpty()
         assumeTrue("RUTACREE_TEST_DRIVER_EMAIL not set", email.isNotBlank() && password.isNotBlank())
         val account = (patiently { api.login(email, password) } as? LoginResult.Driver)?.account
             ?: error("a driver account must sign in as a driver")
         assertEquals(account.driver.id, api.driverMe(account.token).id)
-        val session = api.startShift(account.token, "PRUEBA1", "ruta-2")
+        val session = api.startShift(account.token, "PRUEBA1", "ruta-2", Passengers(men = 4, women = 3, disability = 2, elderly = 1, companions = 1))
         try {
-            assertTrue(session.usesTraccar, "positionSource=${session.positionSource}")
-            assertEquals("PRUEBA1", session.trackerDeviceId)
-            val status = api.trackerStatus(session)
-            assertTrue(status.trackerConnected, "backend not connected to Traccar")
+            assertEquals("PRUEBA1", session.busNumber)
+            assertTrue(session.whatsapp.all { it.isDigit() }, "whatsapp=${session.whatsapp}")
         } finally {
             api.endShift(session, "terminal")
         }

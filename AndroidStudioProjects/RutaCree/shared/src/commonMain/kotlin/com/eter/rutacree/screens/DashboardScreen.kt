@@ -51,6 +51,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.eter.rutacree.map.CITY_CENTER
+import com.eter.rutacree.map.CITY_ZOOM
+import com.eter.rutacree.map.DirectionLegend
 import com.eter.rutacree.map.MapContent
 import com.eter.rutacree.map.PlatformMap
 import com.eter.rutacree.map.rememberAnimatedBuses
@@ -73,6 +76,7 @@ import com.eter.rutacree.ui.MintChip
 import com.eter.rutacree.ui.Neu
 import com.eter.rutacree.ui.NeuButton
 import com.eter.rutacree.ui.NeuIconButton
+import com.eter.rutacree.ui.MunicipalityPicker
 import com.eter.rutacree.ui.PillShape
 import com.eter.rutacree.ui.StatusBanner
 import com.eter.rutacree.ui.busName
@@ -119,6 +123,7 @@ import rutacree.shared.generated.resources.geofence_inside
 import rutacree.shared.generated.resources.geofence_nearest
 import rutacree.shared.generated.resources.geofence_no_gps
 import rutacree.shared.generated.resources.loading_routes
+import rutacree.shared.generated.resources.no_routes
 import rutacree.shared.generated.resources.no_arrival
 import rutacree.shared.generated.resources.offline_banner
 import rutacree.shared.generated.resources.ramp_operational
@@ -144,6 +149,7 @@ fun DashboardScreen(
     onSelectRoute: (String) -> Unit,
     onSelectStop: (String) -> Unit,
     onOpenProfile: () -> Unit,
+    onSelectMunicipality: (String?) -> Unit = {},
 ) {
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         Row(
@@ -178,7 +184,7 @@ fun DashboardScreen(
             )
         }
 
-        RouteSelector(state, onSelectRoute)
+        RouteSelector(state, onSelectRoute, onSelectMunicipality)
 
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)) {
             val walk = state.walk?.takeUnless { it.arrived }
@@ -194,7 +200,8 @@ fun DashboardScreen(
                     selectedStopId = state.stop?.id,
                     buses = buses,
                     userLocation = state.userLocation,
-                    focus = state.stop?.point,
+                    focus = state.stop?.point ?: CITY_CENTER.takeIf { state.noRoutes },
+                    zoom = CITY_ZOOM.takeIf { state.noRoutes },
                     // Walking to the stop: draw the way there and keep the rider and the stop in view.
                     guidance = walk?.path.orEmpty(),
                     frame = walk?.path.orEmpty(),
@@ -211,7 +218,11 @@ fun DashboardScreen(
                 Modifier.align(Alignment.TopStart).fillMaxWidth().padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SourceBadge(state.live, Modifier.padding(start = 4.dp, top = 4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SourceBadge(state.live, Modifier.padding(start = 4.dp, top = 4.dp))
+                    Spacer(Modifier.weight(1f))
+                    DirectionLegend(state.route, Modifier.padding(end = 4.dp, top = 4.dp))
+                }
                 if (!state.online) StatusBanner(stringResource(Res.string.offline_banner))
                 if (walk != null) WalkCard(walk)
             }
@@ -323,17 +334,19 @@ private fun locationLine(state: TransitUiState): String {
         geofence != null && geofence.inside -> stringResource(Res.string.geofence_inside, geofence.stop.name)
         geofence != null -> stringResource(Res.string.geofence_nearest, geofence.stop.name, distanceText(geofence.distanceMeters))
         state.stop != null -> stringResource(Res.string.geofence_no_gps, state.stop.name)
+        state.noRoutes -> stringResource(Res.string.no_routes)
         else -> stringResource(Res.string.loading_routes)
     }
 }
 
 @Composable
-private fun RouteSelector(state: TransitUiState, onSelectRoute: (String) -> Unit) {
+private fun RouteSelector(state: TransitUiState, onSelectRoute: (String) -> Unit, onSelectMunicipality: (String?) -> Unit) {
     val showRoute = stringResource(Res.string.action_show_route)
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        MunicipalityPicker(state.municipalities, state.municipality, onSelectMunicipality)
         state.routes.forEach { route ->
             val selected = route.id == state.route?.id
             Text(
@@ -386,6 +399,7 @@ private fun ArrivalCard(state: TransitUiState, onSelectStop: (String) -> Unit, m
     Column(modifier.neuCard().padding(horizontal = 16.dp, vertical = 14.dp)) {
         when {
             state.loadFailed -> Text(stringResource(Res.string.error_routes), fontSize = 16.sp, color = Neu.Text)
+            state.noRoutes -> Text(stringResource(Res.string.no_routes), fontSize = 16.sp, color = Neu.Text)
             state.loading || state.route == null -> Row(verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(Modifier.size(24.dp), color = Neu.BlueStrong, strokeWidth = 3.dp)
                 Text(

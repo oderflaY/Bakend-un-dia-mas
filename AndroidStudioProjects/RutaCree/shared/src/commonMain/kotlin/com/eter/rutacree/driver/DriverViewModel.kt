@@ -5,24 +5,19 @@ import androidx.lifecycle.viewModelScope
 import com.eter.rutacree.api.ApiException
 import com.eter.rutacree.api.DriverAccount
 import com.eter.rutacree.api.DriverSession
-import com.eter.rutacree.settings.KeyValueStore
 import com.eter.rutacree.api.DriverSocketMessage
+import com.eter.rutacree.api.Passengers
 import com.eter.rutacree.api.RutaCreeApi
-import com.eter.rutacree.api.TrackerStatus
+import com.eter.rutacree.platform.DeviceLocation
+import com.eter.rutacree.platform.currentMinuteOfDay
+import com.eter.rutacree.settings.KeyValueStore
 import com.eter.rutacree.transit.AppConfig
-import com.eter.rutacree.transit.DirectionStep
-import com.eter.rutacree.transit.Directions
-import com.eter.rutacree.transit.DirectionsClient
-import com.eter.rutacree.transit.GeoPoint
 import com.eter.rutacree.transit.Incident
 import com.eter.rutacree.transit.IncidentType
 import com.eter.rutacree.transit.RampRequest
 import com.eter.rutacree.transit.RouteRepository
 import com.eter.rutacree.transit.SimulatedDispatch
-import com.eter.rutacree.transit.Stop
 import com.eter.rutacree.transit.TransitRoute
-import com.eter.rutacree.transit.distanceMeters
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,11 +25,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-data class DriverShift(val driverName: String, val busNumber: String, val route: TransitRoute)
+/** [startMinute] is the phone's local time of day when the route began, for the WhatsApp reports. */
+data class DriverShift(
+    val driverName: String,
+    val busNumber: String,
+    val route: TransitRoute,
+    val startMinute: Int,
+    val passengers: Passengers,
+    /** Already reported in this shift: the bus stays marked without ramp until the workshop fixes it. */
+    val rampFailureReported: Boolean = false,
+) {
+    /** "07:05", as written in the WhatsApp reports. */
+    val startTime: String get() = WhatsAppReports.clock(startMinute)
+}
 
 enum class FinalLocation(val wire: String) { Terminal("terminal"), Workshop("workshop"), Depot("depot") }
 
@@ -42,19 +48,21 @@ enum class ShiftEnd { Completed, Emergency, ClosedByServer }
 
 enum class StartError { Network, Rejected }
 
-/** Guidance while the bus is away from its route: how to reach [targetStop] by street. */
-data class Approach(
-    val target: GeoPoint,
-    val targetStop: Stop?,
-    val remainingMeters: Double,
-    /** Null until a street path arrives (then [path] is a straight line to the target). */
-    val remainingSeconds: Double?,
-    val nextStep: DirectionStep?,
-    val nextStepMeters: Double?,
-    /** What is left to drive, from the bus to the target. */
-    val path: List<GeoPoint>,
-    val byStreet: Boolean,
-)
+enum class PassengerKind { Men, Women, Disability, Elderly, Pregnant, Companions }
+
+/** The phone's GPS sent as the bus position (demo mode, [AppConfig.driverPhoneTracking]). */
+enum class PhoneGps {
+    /** Not used: no route open, or the bus reports with its own GPS. */
+    Off,
+    /** Route open, waiting for the first fix. */
+    Searching,
+    /** The bus is on the map with this phone's position. */
+    Sending,
+    /** No fix for a while (indoors, GPS off or permission denied). */
+    NoSignal,
+    /** Fixes arrive but the server can't be reached. */
+    NoConnection,
+}
 
 data class DriverUiState(
     /** The signed-in driver (the login decided this person is a driver). */
@@ -62,22 +70,20 @@ data class DriverUiState(
     val routes: List<TransitRoute> = emptyList(),
     val busNumber: String = "",
     val selectedRouteId: String? = null,
+    /** Who boards at the start of the route; asked before starting it. */
+    val passengers: Passengers = Passengers(),
     val starting: Boolean = false,
     val startError: StartError? = null,
     val startErrorMessage: String? = null,
     val shift: DriverShift? = null,
-    /** The bus position; null on shift until the phone gets a GPS fix. */
-    val position: GeoPoint? = null,
-    /** Set while the bus is away from the route. */
-    val approach: Approach? = null,
-    val nextStops: List<Stop> = emptyList(),
-    /** Whether the last position report reached the server (always true in simulation). */
-    val reporting: Boolean = true,
     /** Pending ramp requests for this route, oldest first; the first one is on screen. */
     val rampQueue: List<RampRequest> = emptyList(),
     val lastShiftEnd: ShiftEnd? = null,
-    /** Set when the bus position comes from Traccar Client on this phone. */
-    val tracker: TrackerStatus? = null,
+    /** A report waiting to be opened in WhatsApp; the screen opens it and calls [DriverViewModel.whatsAppOpened]. */
+    val whatsApp: WhatsAppMessage? = null,
+    /** The last report sent, so the driver can open it again if WhatsApp was closed without sending. */
+    val lastWhatsApp: WhatsAppMessage? = null,
+    val phoneGps: PhoneGps = PhoneGps.Off,
 ) {
     val rampAlert: RampRequest? get() = rampQueue.firstOrNull()
 
@@ -85,27 +91,24 @@ data class DriverUiState(
         get() = !starting && selectedRouteId != null && busNumber.isNotBlank()
 }
 
-private const val REPORT_INTERVAL_MS = 3_000L
-private const val SIM_TICK_MS = 2_000L
-private const val SIM_SPEED_KMH = 22.0
-private const val SIM_TIME_SCALE = 3.0
 private const val SIM_RAMP_REQUEST_DELAY_MS = 20_000L
-private const val NEXT_STOPS = 3
-private const val TRACKER_POLL_MS = 10_000L
 
-// Hysteresis, so GPS noise near the line doesn't flip between "go to the route" and "on route".
-private const val OFF_ROUTE_M = 80.0
-private const val ON_ROUTE_M = 35.0
-/** Leaving the suggested street path by this much asks for a new one. */
-private const val OFF_PATH_M = 60.0
-private val DIRECTIONS_MIN_INTERVAL = 15.seconds
+/** How often the phone's position goes to the server (the server accepts at most one per second). */
+private const val POSITION_EVERY_MS = 3_000L
+/** A fix older than this no longer counts as the bus position. */
+private const val FIX_MAX_AGE_MS = 20_000L
 
 private const val LAST_BUS_KEY = "driver.lastBus"
 private const val LAST_ROUTE_KEY = "driver.lastRoute"
 
 /**
+ * The driver starts and ends the route, counts who is on board, reports failures and sees ramp
+ * requests. Every report is saved on the server and also opened in WhatsApp for dispatch. The bus has
+ * its own GPS in Traccar; for demos ([AppConfig.driverPhoneTracking]) the phone's GPS stands in for it.
+ *
  * [account] comes from the single sign-in; its token only opens shifts. [onSessionExpired] sends the
- * app back to the login screen when the server rejects that token. [loadRoutes] is replaced in tests.
+ * app back to the login screen when the server rejects that token. [loadRoutes] and [clock] (minute of
+ * the day) are replaced in tests.
  */
 class DriverViewModel(
     private val config: AppConfig,
@@ -113,6 +116,7 @@ class DriverViewModel(
     private val store: KeyValueStore,
     private val onSessionExpired: () -> Unit,
     private val loadRoutes: suspend (RutaCreeApi?) -> List<TransitRoute> = RouteRepository::load,
+    private val clock: () -> Int = ::currentMinuteOfDay,
 ) : ViewModel() {
 
     private val api = config.apiBaseUrl.takeIf { it.isNotBlank() }?.let(::RutaCreeApi)
@@ -125,15 +129,11 @@ class DriverViewModel(
 
     /** Kept only in memory: a stolen phone at rest holds no valid credential. */
     private var session: DriverSession? = null
-    private var gps: GeoPoint? = null
-    private var speedKmh = 0.0
+    private var whatsAppPhone = ""
+    private var nextMessageId = 1L
     private var shiftJobs = emptyList<Job>()
-
-    private val directionsClient = DirectionsClient()
-    private var directions: Directions? = null
-    private var directionsTarget: GeoPoint? = null
-    private var directionsJob: Job? = null
-    private var lastDirectionsRequest: TimeMark? = null
+    private var lastFix: DeviceLocation? = null
+    private var lastFixAt: TimeMark? = null
 
     init {
         viewModelScope.launch {
@@ -151,13 +151,30 @@ class DriverViewModel(
     }
 
     fun selectRoute(id: String) = _state.update { it.copy(selectedRouteId = id) }
-    fun updateBusNumber(value: String) =
-        _state.update { s -> s.copy(busNumber = value.filter { it.isLetterOrDigit() }.take(8), startError = null) }
 
-    fun updateLocation(location: GeoPoint?, speed: Double = 0.0) {
-        gps = location
-        speedKmh = speed
-        if (location != null) setPosition(location)
+    /** Every GPS fix of the phone; only used while a route is open in demo mode. */
+    fun onPhoneLocation(fix: DeviceLocation?) {
+        if (fix == null) return
+        lastFix = fix
+        lastFixAt = TimeSource.Monotonic.markNow()
+    }
+    fun updateBusNumber(value: String) =
+        _state.update { s -> s.copy(busNumber = value.filter { it.isLetterOrDigit() || it == '-' }.take(16), startError = null) }
+
+    /** +1 / -1 from the counters on the start screen; never below 0 nor above [MAX_PASSENGERS]. */
+    fun changePassengers(kind: PassengerKind, delta: Int) = _state.update { s ->
+        val p = s.passengers
+        fun bump(n: Int) = (n + delta).coerceIn(0, MAX_PASSENGERS)
+        s.copy(
+            passengers = when (kind) {
+                PassengerKind.Men -> p.copy(men = bump(p.men))
+                PassengerKind.Women -> p.copy(women = bump(p.women))
+                PassengerKind.Disability -> p.copy(disability = bump(p.disability))
+                PassengerKind.Elderly -> p.copy(elderly = bump(p.elderly))
+                PassengerKind.Pregnant -> p.copy(pregnant = bump(p.pregnant))
+                PassengerKind.Companions -> p.copy(companions = bump(p.companions))
+            }
+        )
     }
 
     fun startShift() {
@@ -167,15 +184,16 @@ class DriverViewModel(
         store.put(LAST_BUS_KEY, s.busNumber)
         store.put(LAST_ROUTE_KEY, route.id)
         if (api == null) {
-            beginShift(DriverShift(account.driver.name, s.busNumber, route))
+            beginShift(account.driver.name, s.busNumber, route, s.passengers)
             return
         }
         _state.update { it.copy(starting = true, startError = null, startErrorMessage = null) }
         viewModelScope.launch {
             try {
-                val newSession = api.startShift(account.token, s.busNumber, route.id)
+                val newSession = api.startShift(account.token, s.busNumber, route.id, s.passengers)
                 session = newSession
-                beginShift(DriverShift(newSession.driverName, newSession.busNumber, route))
+                whatsAppPhone = newSession.whatsapp
+                beginShift(newSession.driverName, newSession.busNumber, route, s.passengers)
             } catch (e: ApiException) {
                 if (e.unauthorized) {
                     // The login expired or an admin deactivated the driver.
@@ -188,33 +206,22 @@ class DriverViewModel(
         }
     }
 
-    private fun beginShift(shift: DriverShift) {
+    private fun beginShift(driverName: String, busNumber: String, route: TransitRoute, passengers: Passengers) {
+        val shift = DriverShift(driverName, busNumber, route, clock(), passengers)
         _state.update {
-            it.copy(shift = shift, starting = false, lastShiftEnd = null, rampQueue = emptyList(), reporting = true)
+            it.copy(shift = shift, starting = false, lastShiftEnd = null, rampQueue = emptyList())
         }
+        send(WhatsAppReports.start(shift))
         val jobs = mutableListOf<Job>()
-        val fix = gps
-        // With a server, positions only ever come from GPS: nothing invented is reported to riders.
-        if (fix != null) setPosition(fix)
-        else if (api == null) jobs += viewModelScope.launch { simulateDriving(shift.route) }
         val current = session
         if (api != null && current != null) {
-            // Also with Traccar: the server ignores these while Traccar Client reports, so they are the fallback.
-            jobs += viewModelScope.launch { reportLoop(api, current) }
             jobs += viewModelScope.launch { listenForRamps(api, current) }
-            if (current.usesTraccar) {
-                _state.update {
-                    it.copy(tracker = TrackerStatus("traccar", current.trackerDeviceId, current.trackerUrl))
-                }
-                jobs += viewModelScope.launch { pollTracker(api, current) }
-            }
+            if (config.driverPhoneTracking) jobs += viewModelScope.launch { sendPhonePositions(api, current) }
         } else {
             // Demo: a rider asks for the ramp shortly after the shift starts.
             jobs += viewModelScope.launch {
                 delay(SIM_RAMP_REQUEST_DELAY_MS)
-                _state.value.nextStops.firstOrNull { it.accessible }?.let {
-                    SimulatedDispatch.requestRamp(shift.route.id, it.id, it.name)
-                }
+                route.stops.firstOrNull { it.accessible }?.let { SimulatedDispatch.requestRamp(route.id, it.id, it.name) }
             }
         }
         shiftJobs = jobs
@@ -233,146 +240,90 @@ class DriverViewModel(
         }
     }
 
-    /** Crash or mechanical failure: alerts riders on the route and cancels the shift immediately. */
-    fun reportEmergency(type: IncidentType) {
+    /**
+     * Ramp failure: riders are told and the bus keeps its route without ramp. Accident or truck failure:
+     * riders on the route are alerted and the shift ends at once.
+     */
+    fun reportFailure(type: IncidentType) {
         val shift = _state.value.shift ?: return
+        if (type == IncidentType.RampFailure && shift.rampFailureReported) return
         val current = session
         if (api != null && current != null) {
-            // Fire-and-forget on the ViewModel scope so it completes even after the shift UI closes.
-            viewModelScope.launch {
-                runCatching { api.reportIncident(current, accident = type == IncidentType.Accident) }
+            val wire = when (type) {
+                IncidentType.Accident -> "accident"
+                IncidentType.Breakdown -> "breakdown"
+                IncidentType.RampFailure -> "ramp_failure"
             }
+            // Fire-and-forget on the ViewModel scope so it completes even after the shift UI closes.
+            viewModelScope.launch { runCatching { api.reportIncident(current, wire) } }
         } else {
             SimulatedDispatch.reportIncident(
                 Incident("driver-${shift.busNumber}", shift.busNumber.hashCode().toLong(), shift.busNumber, shift.route.id, type)
             )
         }
-        stopShift(ShiftEnd.Emergency)
+        send(WhatsAppReports.failure(shift, type, clock()))
+        if (type == IncidentType.RampFailure) {
+            _state.update { it.copy(shift = shift.copy(rampFailureReported = true)) }
+        } else {
+            stopShift(ShiftEnd.Emergency)
+        }
     }
 
     fun endShift(finalLocation: FinalLocation) {
+        val shift = _state.value.shift ?: return
         val current = session
         if (api != null && current != null) {
             viewModelScope.launch { runCatching { api.endShift(current, finalLocation.wire) } }
         }
+        send(WhatsAppReports.end(shift, clock(), finalLocation))
         stopShift(ShiftEnd.Completed)
+        // The next route starts with a fresh count.
+        _state.update { it.copy(passengers = Passengers()) }
+    }
+
+    /** The screen opened [DriverUiState.whatsApp] (or could not); it stays available as [DriverUiState.lastWhatsApp]. */
+    fun whatsAppOpened() = _state.update { it.copy(whatsApp = null) }
+
+    /** Opens the last report again, for when WhatsApp was closed before sending it. */
+    fun resendWhatsApp() = _state.update { s -> s.lastWhatsApp?.let { s.copy(whatsApp = it.copy(id = nextMessageId++)) } ?: s }
+
+    private fun send(text: String) {
+        val message = WhatsAppMessage(nextMessageId++, whatsAppPhone, text)
+        _state.update { it.copy(whatsApp = message, lastWhatsApp = message) }
     }
 
     private fun stopShift(end: ShiftEnd) {
         shiftJobs.forEach { it.cancel() }
         shiftJobs = emptyList()
         session = null
-        clearDirections()
-        _state.update {
-            it.copy(
-                shift = null, nextStops = emptyList(), rampQueue = emptyList(), lastShiftEnd = end, tracker = null,
-                approach = null,
-            )
-        }
+        _state.update { it.copy(shift = null, rampQueue = emptyList(), lastShiftEnd = end, phoneGps = PhoneGps.Off) }
     }
 
-    private fun setPosition(point: GeoPoint) {
-        val s = _state.value
-        val route = s.shift?.route ?: return _state.update { it.copy(position = point) }
-        val onRoute = route.geometry.project(point)
-        val nextStops = route.stops.filter { it.alongMeters > onRoute.alongMeters + 10 }.take(NEXT_STOPS)
-        val away = onRoute.offsetMeters > if (s.approach != null) ON_ROUTE_M else OFF_ROUTE_M
-        val approach = if (away) approachFrom(point, route, onRoute.alongMeters) else null
-        if (approach == null) clearDirections()
-        _state.update { it.copy(position = point, nextStops = nextStops, approach = approach) }
-    }
-
-    /**
-     * Joins the route at the next stop ahead of its closest point, so the bus arrives going the right
-     * way and where riders wait. Past the last stop it starts over from the terminal.
-     */
-    private fun approachFrom(point: GeoPoint, route: TransitRoute, alongMeters: Double): Approach {
-        val stop = route.stops.firstOrNull { it.alongMeters >= alongMeters } ?: route.stops.firstOrNull()
-        val target = stop?.point ?: route.geometry.pointAt(alongMeters)
-        val current = directions?.takeIf { directionsTarget == target }
-        val progress = current?.path?.project(point)
-        if (current == null || progress!!.offsetMeters > OFF_PATH_M) requestDirections(point, target)
-        if (current == null || progress == null) {
-            return Approach(
-                target, stop, distanceMeters(point, target), null, null, null, listOf(point, target), byStreet = false,
-            )
-        }
-        val along = progress.alongMeters
-        val length = current.path.lengthMeters
-        val next = current.stepAlong.indexOfFirst { it > along + 8 }.takeIf { it >= 0 }
-        return Approach(
-            target = target,
-            targetStop = stop,
-            remainingMeters = length - along,
-            remainingSeconds = if (length > 0) current.durationSeconds * (length - along) / length else 0.0,
-            nextStep = next?.let { current.steps[it] },
-            nextStepMeters = next?.let { current.stepAlong[it] - along },
-            path = listOf(point) + current.path.pointsAfter(along),
-            byStreet = true,
-        )
-    }
-
-    private fun requestDirections(from: GeoPoint, to: GeoPoint) {
-        if (directionsJob?.isActive == true) return
-        if (lastDirectionsRequest?.let { it.elapsedNow() < DIRECTIONS_MIN_INTERVAL } == true) return
-        lastDirectionsRequest = TimeSource.Monotonic.markNow()
-        directionsJob = viewModelScope.launch {
-            val result = directionsClient.driving(from, to) ?: return@launch
-            directions = result
-            directionsTarget = to
-            _state.value.position?.let { if (_state.value.approach != null) setPosition(it) }
-        }
-    }
-
-    private fun clearDirections() {
-        directionsJob?.cancel()
-        directions = null
-        directionsTarget = null
-        lastDirectionsRequest = null
-    }
-
-    private suspend fun simulateDriving(route: TransitRoute) {
-        var along = 0.0
-        speedKmh = SIM_SPEED_KMH
-        while (gps == null) {
-            setPosition(route.geometry.pointAt(along))
-            delay(SIM_TICK_MS)
-            along += SIM_SPEED_KMH / 3.6 * (SIM_TICK_MS / 1000.0) * SIM_TIME_SCALE
-            if (along > route.geometry.lengthMeters) along = 0.0
-        }
-    }
-
-    private suspend fun reportLoop(api: RutaCreeApi, current: DriverSession) {
+    /** Demo mode: puts the bus on the map with the phone's latest fix every few seconds. */
+    private suspend fun sendPhonePositions(api: RutaCreeApi, current: DriverSession) {
+        _state.update { it.copy(phoneGps = PhoneGps.Searching) }
+        var sentOnce = false
         while (true) {
-            val position = _state.value.position
-            if (position != null) {
-                val ok = try {
-                    api.reportPosition(current, position, speedKmh)
-                    true
-                } catch (e: CancellationException) {
-                    throw e
+            val fix = lastFix
+            val fresh = lastFixAt?.elapsedNow()?.inWholeMilliseconds?.let { it < FIX_MAX_AGE_MS } == true
+            val status = if (fix == null || !fresh) {
+                if (sentOnce) PhoneGps.NoSignal else PhoneGps.Searching
+            } else {
+                try {
+                    val speed = fix.speedKmh.takeIf { it.isFinite() }?.coerceIn(0.0, 199.0) ?: 0.0
+                    api.sendPosition(current, fix.point.lat, fix.point.lon, speed)
+                    sentOnce = true
+                    PhoneGps.Sending
                 } catch (e: ApiException) {
-                    // 401: the server closed this shift (expired, replaced or ended by an admin).
-                    if (e.unauthorized) return stopShift(ShiftEnd.ClosedByServer)
-                    false
+                    when {
+                        e.unauthorized -> return stopShift(ShiftEnd.ClosedByServer)
+                        e.status == 429 -> PhoneGps.Sending // one too soon: the previous one counted
+                        else -> PhoneGps.NoConnection
+                    }
                 }
-                _state.update { it.copy(reporting = ok) }
             }
-            delay(REPORT_INTERVAL_MS)
-        }
-    }
-
-    private suspend fun pollTracker(api: RutaCreeApi, current: DriverSession) {
-        while (true) {
-            try {
-                val status = api.trackerStatus(current)
-                _state.update { it.copy(tracker = status) }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: ApiException) {
-                if (e.unauthorized) return stopShift(ShiftEnd.ClosedByServer)
-            }
-            delay(TRACKER_POLL_MS)
+            _state.update { if (it.shift != null) it.copy(phoneGps = status) else it }
+            delay(POSITION_EVERY_MS)
         }
     }
 
@@ -390,5 +341,10 @@ class DriverViewModel(
     private fun DriverUiState.enqueue(requests: List<RampRequest>): DriverUiState {
         val known = rampQueue.map { it.id }.toSet()
         return copy(rampQueue = rampQueue + requests.filter { it.id !in known })
+    }
+
+    companion object {
+        /** Same limit as the server. */
+        const val MAX_PASSENGERS = 99
     }
 }

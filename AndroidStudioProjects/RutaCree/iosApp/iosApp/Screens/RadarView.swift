@@ -32,7 +32,14 @@ struct RadarView: View {
             }
             .padding(.vertical, 8)
 
-            RouteChips(routes: state.routes, selectedId: state.route?.id, showColor: false) {
+            RouteChips(
+                routes: state.routes,
+                selectedId: state.route?.id,
+                showColor: false,
+                municipalities: state.municipalities,
+                municipality: state.municipality,
+                onMunicipality: session.selectMunicipality
+            ) {
                 session.transit.selectRoute(routeId: $0)
             }
 
@@ -52,7 +59,8 @@ struct RadarView: View {
                                 )
                             },
                             user: state.userLocation,
-                            focus: state.stop?.point,
+                            focus: state.stop?.point ?? (state.noRoutes ? GeoPoint(lat: 24.0277, lon: -104.6532) : nil),
+                            zoom: state.noRoutes ? 12.5 : nil,
                             // Walking to the stop: draw the way there and keep rider and stop in view.
                             guidance: walk?.path ?? [],
                             frame: walk?.path ?? []
@@ -88,6 +96,7 @@ struct RadarView: View {
                 : L10n.t("geofence_nearest", geofence.stop.name, Format.distance(geofence.distanceMeters))
         }
         if let stop = state.stop { return L10n.t("geofence_no_gps", stop.name) }
+        if state.noRoutes { return L10n.t("no_routes") }
         return L10n.t("loading_routes")
     }
 }
@@ -98,11 +107,15 @@ struct RouteChips: View {
     let routes: [TransitRoute]
     let selectedId: String?
     let showColor: Bool
+    var municipalities: [String] = []
+    var municipality: String? = nil
+    var onMunicipality: (String?) -> Void = { _ in }
     let onSelect: (String) -> Void
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 14) {
+                MunicipalityMenu(municipalities: municipalities, selected: municipality, onSelect: onMunicipality)
                 ForEach(routes, id: \.id) { route in
                     let selected = route.id == selectedId
                     Button {
@@ -230,6 +243,8 @@ private struct ArrivalCard: View {
         VStack(alignment: .leading, spacing: 0) {
             if state.loadFailed {
                 Text(L10n.t("error_routes")).font(.system(size: 16)).foregroundStyle(neu.text)
+            } else if state.noRoutes {
+                Text(L10n.t("no_routes")).font(.system(size: 16)).foregroundStyle(neu.text)
             } else if let route = state.route, !state.loading {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -475,5 +490,39 @@ struct RowSurface: ViewModifier {
     let selected: Bool
     func body(content: Content) -> some View {
         if selected { content.neuInset() } else { content.neuCard(distance: 3) }
+    }
+}
+
+/// Pill with the chosen municipio that opens the list; hidden while routes serve a single municipio.
+struct MunicipalityMenu: View {
+    @Environment(\.neu) private var neu
+    let municipalities: [String]
+    let selected: String?
+    let onSelect: (String?) -> Void
+
+    var body: some View {
+        if municipalities.count > 1 {
+            let all = L10n.t("municipality_all")
+            Menu {
+                Button(all) { onSelect(nil) }
+                ForEach(municipalities, id: \.self) { name in
+                    Button(name) { onSelect(name) }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "mappin.and.ellipse").foregroundStyle(neu.blueOnBg)
+                    Text(selected ?? all)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(neu.text)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.down").font(.system(size: 12)).foregroundStyle(neu.textMuted)
+                }
+                .padding(.horizontal, 16)
+                .frame(minHeight: 48)
+                .neuCard(Capsule(), distance: 4)
+            }
+            .accessibilityLabel(L10n.t("cd_municipality", selected ?? all))
+            .accessibilityHint(L10n.t("action_change_municipality"))
+        }
     }
 }

@@ -9,6 +9,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.eter.rutacree.ui.PillShape
+import org.jetbrains.compose.resources.stringResource
+import rutacree.shared.generated.resources.Res
+import rutacree.shared.generated.resources.cd_map_directions
+import rutacree.shared.generated.resources.map_inbound
+import rutacree.shared.generated.resources.map_outbound
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -28,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import com.eter.rutacree.transit.AppConfig
 import com.eter.rutacree.transit.BusOnRoute
 import com.eter.rutacree.transit.GeoPoint
+import com.eter.rutacree.transit.INBOUND_COLOR_HEX
+import com.eter.rutacree.transit.OUTBOUND_COLOR_HEX
 import com.eter.rutacree.transit.Stop
 import com.eter.rutacree.transit.TransitRoute
 import com.eter.rutacree.ui.AppIcons
@@ -54,6 +71,10 @@ data class MapContent(
     /** Points the camera keeps in view; when set it takes precedence over [focus]. */
     val frame: List<GeoPoint> = emptyList(),
 )
+
+/** Durango's city center: where the map opens while no route is published. */
+val CITY_CENTER = GeoPoint(24.0277, -104.6532)
+const val CITY_ZOOM = 12.5
 
 /** Native street map per platform. Must fall back to [SchematicMap] when it cannot render. */
 @Composable
@@ -127,13 +148,16 @@ fun SchematicMap(content: MapContent, modifier: Modifier = Modifier) {
                 drawLine(grid, Offset(size.width * i / 6f, 0f), Offset(size.width * i / 6f, size.height), 16f)
                 drawLine(grid, Offset(0f, size.height * i / 6f), Offset(size.width, size.height * i / 6f), 16f)
             }
-            val path = Path().apply {
-                route.geometry.points.forEachIndexed { i, p ->
+            fun leg(points: List<GeoPoint>) = Path().apply {
+                points.forEachIndexed { i, p ->
                     val o = Offset(fx(p) * size.width, fy(p) * size.height)
                     if (i == 0) moveTo(o.x, o.y) else lineTo(o.x, o.y)
                 }
             }
-            drawPath(path, routeColor, style = Stroke(width = 12f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            val legStroke = Stroke(width = 12f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            // Return first, so the outbound color wins where both legs share a street.
+            drawPath(leg(route.inbound), parseHexColor(INBOUND_COLOR_HEX), style = legStroke)
+            drawPath(leg(route.outbound), parseHexColor(OUTBOUND_COLOR_HEX), style = legStroke)
             if (content.guidance.size >= 2) {
                 val guide = Path().apply {
                     content.guidance.forEachIndexed { i, p ->
@@ -169,4 +193,34 @@ fun SchematicMap(content: MapContent, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+/** Key for the two line colors; shown only for routes that come back (have a return leg). */
+@Composable
+fun DirectionLegend(route: TransitRoute?, modifier: Modifier = Modifier) {
+    if (route?.returnStartIndex == null) return
+    val description = stringResource(Res.string.cd_map_directions)
+    Row(
+        modifier
+            .neuCard(PillShape, 4.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clearAndSetSemantics { contentDescription = description },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LegendItem(parseHexColor(OUTBOUND_COLOR_HEX), stringResource(Res.string.map_outbound))
+        Spacer(Modifier.width(12.dp))
+        LegendItem(parseHexColor(INBOUND_COLOR_HEX), stringResource(Res.string.map_inbound))
+    }
+}
+
+@Composable
+private fun LegendItem(color: Color, label: String) {
+    Box(Modifier.size(width = 18.dp, height = 5.dp).background(color, PillShape))
+    Text(
+        label,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = Neu.Text,
+        modifier = Modifier.padding(start = 6.dp),
+    )
 }

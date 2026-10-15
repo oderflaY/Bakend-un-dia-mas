@@ -24,6 +24,7 @@
     </plurals>
     <string name="loading_routes">Loading routes…</string>
     <string name="error_routes">Routes could not be loaded. Check your connection.</string>
+    <string name="no_routes">No routes are published yet. They will show up here soon.</string>
     <string name="arrival_headline">Arriving at %1$s in %2$d min</string>
     <string name="arrival_distance">(%1$s)</string>
     <string name="no_arrival">No buses with a ramp approaching %1$s</string>
@@ -186,22 +187,17 @@
     <string name="driver_tab_shift">Shift</string>
     <string name="driver_tab_reports">Reports</string>
     <string name="driver_assign_title">Start of shift</string>
-    <string name="driver_assign_subtitle">Type the bus you drive today and choose the route.</string>
+    <string name="driver_assign_subtitle">Type the bus you drive today, choose the route and count the passengers.</string>
     <string name="driver_bus_number">Bus number</string>
     <string name="driver_bus_number_hint">e.g. 245</string>
     <string name="driver_route">Today\'s route</string>
     <string name="driver_start">Start route</string>
-    <string name="action_start_route">start broadcasting your position on this route</string>
+    <string name="action_start_route">start the route and open the WhatsApp message</string>
     <string name="driver_missing_fields">Type the bus number and choose the route.</string>
-    <string name="driver_last_end_completed">Shift closed successfully.</string>
+    <string name="driver_last_end_completed">Route finished. The end time was recorded.</string>
     <string name="driver_last_end_emergency">Route canceled due to an emergency. Riders were notified.</string>
 
     <string name="driver_console_title">Unit %1$s</string>
-    <string name="driver_next_stops">Next stops</string>
-    <string name="driver_no_stops">End of route</string>
-    <string name="driver_accessible">Accessible</string>
-    <string name="driver_reporting_ok">Broadcasting position</string>
-    <string name="driver_reporting_off">No connection to the server</string>
     <string name="driver_simulated">Simulation: no server configured</string>
     <string name="ramp_alert_title">PREPARE RAMP AT:</string>
     <string name="ramp_alert_ack">Got it</string>
@@ -210,9 +206,9 @@
 
     <string name="driver_reports_title">Reports and closing</string>
     <string name="driver_no_shift">Start a shift to use this section.</string>
-    <string name="panic_section">Emergency</string>
+    <string name="panic_section">Bus failure or crash</string>
     <string name="panic_type_accident">Crash</string>
-    <string name="panic_type_breakdown">Mechanical failure</string>
+    <string name="panic_type_breakdown">Bus failure</string>
     <string name="panic_slider">Slide to report and cancel the route</string>
     <string name="cd_panic_slider">Report %1$s and cancel the route. Slide right to confirm.</string>
     <string name="action_panic">report the emergency and cancel the route</string>
@@ -276,17 +272,6 @@
     <string name="action_delete_no">keep your account</string>
     <string name="profile_save_failed">Could not save to the server. Check your connection.</string>
 
-    <string name="tracker_title">Bus location</string>
-    <string name="tracker_source_traccar">Sent by Traccar Client from this phone.</string>
-    <string name="tracker_ok">Last location %1$d s ago</string>
-    <string name="tracker_source_app">Sent by this app\'s GPS. Keep the screen on.</string>
-    <string name="tracker_no_position">No location for %1$d s. Check that GPS is on.</string>
-    <string name="tracker_waiting_any">Waiting for the first location… Check that GPS is on.</string>
-    <string name="tracker_setup_optional">Recommended: with Traccar Client the location keeps arriving with the screen off. Set it up like this:</string>
-    <string name="tracker_setup">Set up Traccar Client like this:</string>
-    <string name="tracker_setup_id">Device identifier: %1$s</string>
-    <string name="tracker_setup_url">Server URL: %1$s</string>
-    <string name="tracker_setup_frequency">Frequency: 5 seconds, and turn the service on.</string>
 
     <!-- Login unificado -->
     <string name="login_signin_subtitle">Drivers and riders sign in here with their email and password.</string>
@@ -309,16 +294,7 @@
     <string name="driver_greeting">Hi, %1$s</string>
     <string name="driver_role_label">Driver · %1$s</string>
     <string name="driver_signout_blocked">End your shift in Reports before signing out.</string>
-    <string name="driver_gps_waiting">Looking for GPS signal… Move to open sky and check that location is on.</string>
-    <string name="driver_on_route">On route</string>
-    <string name="approach_title">Head to the route</string>
-    <string name="approach_join_stop">Join at %1$s</string>
-    <string name="approach_join_route">Join the route</string>
-    <string name="approach_eta">%1$s · %2$s</string>
-    <string name="approach_straight">%1$s in a straight line</string>
-    <string name="approach_calculating">Finding the way by street…</string>
     <string name="approach_in">In %1$s</string>
-    <string name="approach_follow_line">Follow the dotted line</string>
     <string name="approach_street">%1$s onto %2$s</string>
     <string name="distance_m">%1$d m</string>
     <string name="duration_min">%1$d min</string>
@@ -332,9 +308,6 @@
     <string name="maneuver_uturn">Make a U-turn</string>
     <string name="maneuver_roundabout">Enter the roundabout</string>
     <string name="maneuver_arrive">You arrive at the stop</string>
-    <string name="action_navigate">Navigate</string>
-    <string name="action_navigate_label">open turn-by-turn navigation</string>
-    <string name="cd_driver_map">Map with your bus and route %1$s</string>
     <string name="walk_heading">Walk %1$s</string>
     <string name="walk_summary">%1$s · %2$s on foot to %3$s</string>
     <string name="action_walk">Go</string>
@@ -363,4 +336,49 @@
     <string name="action_use_route_label">use this route on the Radar</string>
     <string name="action_choose_route_stop">show on the map</string>
     <string name="cd_route_map">Map of %1$s, from %2$s to %3$s</string>
+
+    <!-- Chofer: avisos por WhatsApp, conteo de pasajeros y falla de rampa -->
+    <string name="driver_passengers_title">Riders on this trip</string>
+    <string name="passengers_men">Men</string>
+    <string name="passengers_women">Women</string>
+    <string name="passengers_disability">With a disability</string>
+    <string name="passengers_elderly">Older adults</string>
+    <string name="passengers_pregnant">Pregnant</string>
+    <string name="passengers_companions">Companions</string>
+    <string name="driver_passengers_of_them">Of those %1$d riders, how many are…?</string>
+    <string name="cd_passengers_count">%1$s: %2$d</string>
+    <string name="action_passengers_add">add one to %1$s</string>
+    <string name="action_passengers_remove">remove one from %1$s</string>
+    <string name="driver_whatsapp_hint">When you start, finish or report a failure, WhatsApp opens with the message ready for dispatch: just tap Send.</string>
+    <string name="driver_console_started">Route started at %1$s</string>
+    <string name="driver_console_passengers">%1$d riders · %2$d men · %3$d women</string>
+    <string name="driver_console_categories">Disability %1$d · Older adults %2$d · Pregnant %3$d · Companions %4$d</string>
+    <string name="driver_console_gps">The bus GPS sends its location.</string>
+    <string name="driver_console_reports_hint">To report a failure or finish the route, go to Reports.</string>
+    <string name="driver_console_ramp_reported">You reported the ramp as broken.</string>
+    <string name="whatsapp_resend">Open the last message again</string>
+    <string name="action_whatsapp_resend">open the last message in WhatsApp again</string>
+    <string name="ramp_failure_section">Ramp failure</string>
+    <string name="ramp_failure_desc">The bus keeps its route. Riders are told there is no ramp and the workshop checks it.</string>
+    <string name="ramp_failure_button">Report ramp failure</string>
+    <string name="action_ramp_failure">report that the ramp does not work</string>
+    <string name="ramp_failure_done">Ramp failure reported. If the WhatsApp message was not sent, open it again from Shift.</string>
+    <string name="incident_title_ramp">Your bus ramp does not work</string>
+    <string name="incident_body_ramp_bus">Bus %1$s keeps its route, but cannot board wheelchairs.</string>
+    <string name="incident_body_ramp">The bus keeps its route, but cannot board wheelchairs.</string>
+    <string name="gps_phone_sending">Your bus is on the map</string>
+    <string name="gps_phone_sending_hint">This phone sends its location every 3 seconds. You can lock the screen.</string>
+    <string name="gps_phone_searching">Looking for GPS signal…</string>
+    <string name="gps_phone_searching_hint">Wait a few seconds; it is faster outdoors.</string>
+    <string name="gps_phone_no_signal">No GPS signal</string>
+    <string name="gps_phone_no_signal_hint">Check that the phone location is on and allowed for RutaCree.</string>
+    <string name="gps_phone_no_connection">No internet</string>
+    <string name="gps_phone_no_connection_hint">The bus is not updating on the map; it resumes by itself when the connection is back.</string>
+    <string name="municipality_label">Municipality</string>
+    <string name="municipality_all">All municipalities</string>
+    <string name="cd_municipality">Municipality: %1$s</string>
+    <string name="action_change_municipality">change municipality</string>
+    <string name="map_outbound">Outbound</string>
+    <string name="map_inbound">Return</string>
+    <string name="cd_map_directions">On the map, the outbound trip is blue and the return is orange.</string>
 </resources>

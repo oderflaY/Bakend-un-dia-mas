@@ -3,6 +3,7 @@ package com.eter.rutacree.platform
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.eter.rutacree.transit.GeoPoint
+import io.ktor.http.encodeURLParameter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -51,7 +52,14 @@ interface DeviceServices {
 
     /** Hands the trip to the phone's maps app; [walking] asks for a path on foot instead of by car. */
     fun openNavigation(destination: GeoPoint, walking: Boolean = false)
+
+    /** Opens WhatsApp with [text] written for [phone] (digits with country code; empty = pick a chat). */
+    fun openWhatsApp(phone: String, text: String)
 }
+
+/** wa.me link: opens WhatsApp when installed, or its web page otherwise. */
+fun whatsAppUrl(phone: String, text: String): String =
+    "https://wa.me/${phone.filter { it.isDigit() }}?text=${text.encodeURLParameter()}"
 
 @Composable
 expect fun rememberDeviceServices(): DeviceServices
@@ -78,4 +86,5 @@ object NoOpDeviceServices : DeviceServices {
     override fun stopAlarm() = Unit
     override fun keepScreenOn(on: Boolean) = Unit
     override fun openNavigation(destination: GeoPoint, walking: Boolean) = Unit
+    override fun openWhatsApp(phone: String, text: String) = Unit
 }

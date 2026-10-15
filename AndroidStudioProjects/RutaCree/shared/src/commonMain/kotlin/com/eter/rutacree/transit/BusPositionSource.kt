@@ -94,6 +94,8 @@ class TraccarSocketFeed(
         val json = Json { ignoreUnknownKeys = true }
         val ACCIDENT_ALARMS = setOf("accident", "sos", "fallDown")
         val BREAKDOWN_ALARMS = setOf("fault", "powerCut", "tow", "fuelLeak")
+        /** Sent by the backend when the driver reports the ramp broken. */
+        const val RAMP_ALARM = "rampFault"
 
         fun TraccarPosition.toBusPosition(device: TraccarDevice?) = BusPosition(
             deviceId = deviceId,
@@ -114,6 +116,7 @@ class TraccarSocketFeed(
             val incidentType = when (alarm) {
                 in ACCIDENT_ALARMS -> IncidentType.Accident
                 in BREAKDOWN_ALARMS -> IncidentType.Breakdown
+                RAMP_ALARM -> IncidentType.RampFailure
                 else -> return null
             }
             return Incident("traccar-$id", deviceId, device?.name, device?.routeId(), incidentType)

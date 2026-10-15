@@ -47,11 +47,25 @@ import rutacree.shared.generated.resources.incident_dismiss
 import rutacree.shared.generated.resources.incident_hint
 import rutacree.shared.generated.resources.incident_title_accident
 import rutacree.shared.generated.resources.incident_title_breakdown
+import rutacree.shared.generated.resources.incident_title_ramp
+import rutacree.shared.generated.resources.incident_body_ramp
+import rutacree.shared.generated.resources.incident_body_ramp_bus
 
 @Composable
 fun incidentTitle(incident: Incident): String = stringResource(
-    if (incident.type == IncidentType.Accident) Res.string.incident_title_accident else Res.string.incident_title_breakdown
+    when (incident.type) {
+        IncidentType.Accident -> Res.string.incident_title_accident
+        IncidentType.Breakdown -> Res.string.incident_title_breakdown
+        IncidentType.RampFailure -> Res.string.incident_title_ramp
+    }
 )
+
+@Composable
+private fun incidentBody(incident: Incident): String {
+    val ramp = incident.type == IncidentType.RampFailure
+    return incident.busName?.let { stringResource(if (ramp) Res.string.incident_body_ramp_bus else Res.string.incident_body_bus, it) }
+        ?: stringResource(if (ramp) Res.string.incident_body_ramp else Res.string.incident_body)
+}
 
 /**
  * High-contrast contingency alert. It interrupts navigation (not dismissable by tapping outside)
@@ -91,8 +105,7 @@ fun IncidentDialog(incident: Incident, onAlternatives: () -> Unit, onDismiss: ()
                 Text(title, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Neu.Text, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    incident.busName?.let { stringResource(Res.string.incident_body_bus, it) }
-                        ?: stringResource(Res.string.incident_body),
+                    incidentBody(incident),
                     fontSize = 17.sp,
                     color = Neu.Text,
                     textAlign = TextAlign.Center,

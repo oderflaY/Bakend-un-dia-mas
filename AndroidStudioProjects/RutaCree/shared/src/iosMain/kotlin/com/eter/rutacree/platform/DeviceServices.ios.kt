@@ -222,6 +222,11 @@ private class IosDeviceServices : DeviceServices {
         UIApplication.sharedApplication.openURL(url, emptyMap<Any?, Any?>(), null)
     }
 
+    override fun openWhatsApp(phone: String, text: String) {
+        val url = NSURL.URLWithString(whatsAppUrl(phone, text)) ?: return
+        UIApplication.sharedApplication.openURL(url, emptyMap<Any?, Any?>(), null)
+    }
+
     fun release() {
         pendingLocation = null
         stopLocationUpdates()

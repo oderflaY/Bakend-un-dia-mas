@@ -91,6 +91,8 @@ object AppIcons {
     val ChevronUp by lazy { lineIcon("ChevronUp", "M18 15l-6-6-6 6") }
     val ChevronDown by lazy { lineIcon("ChevronDown", "M6 9l6 6 6-6") }
     val Check by lazy { lineIcon("Check", "M20 6L9 17l-5-5") }
+    val Plus by lazy { lineIcon("Plus", "M12 5v14", "M5 12h14") }
+    val Minus by lazy { lineIcon("Minus", "M5 12h14") }
     val Close by lazy { lineIcon("Close", "M18 6L6 18", "M6 6l12 12") }
     val Send by lazy {
         lineIcon(

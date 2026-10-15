@@ -8,7 +8,6 @@ struct DriverRootView: View {
     @Bindable var session: DriverConsole
 
     var body: some View {
-        let services = model.services
         TabView(selection: $session.tab) {
             DriverShiftView(session: session)
                 .tabItem { Label(L10n.t("driver_tab_shift"), systemImage: "bus.fill") }
@@ -27,10 +26,9 @@ struct DriverRootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: session.state.rampAlert?.id)
-        .onChange(of: services.location) {
-            if session.onShift {
-                session.viewModel.updateLocation(location: services.geoPoint, speed: services.speedKmh)
-            }
+        .onChange(of: model.services.location) {
+            guard let point = model.services.geoPoint else { return }
+            session.viewModel.onPhoneLocation(fix: DeviceLocation(point: point, speedKmh: model.services.speedKmh))
         }
     }
 }

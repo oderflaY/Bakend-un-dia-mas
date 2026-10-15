@@ -351,6 +351,15 @@ private class AndroidDeviceServices(private val context: Context) : DeviceServic
         }
     }
 
+    override fun openWhatsApp(phone: String, text: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(whatsAppUrl(phone, text)))
+        if (context.findActivity() == null) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+        }
+    }
+
     fun release() {
         keepTrackingInBackground(false)
         pendingResult = null

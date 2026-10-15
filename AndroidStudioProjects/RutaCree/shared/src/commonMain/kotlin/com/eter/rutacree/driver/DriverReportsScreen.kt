@@ -81,12 +81,21 @@ import rutacree.shared.generated.resources.panic_section
 import rutacree.shared.generated.resources.panic_slider
 import rutacree.shared.generated.resources.panic_type_accident
 import rutacree.shared.generated.resources.panic_type_breakdown
+import rutacree.shared.generated.resources.action_ramp_failure
+import rutacree.shared.generated.resources.ramp_failure_button
+import rutacree.shared.generated.resources.ramp_failure_desc
+import rutacree.shared.generated.resources.ramp_failure_done
+import rutacree.shared.generated.resources.ramp_failure_section
+import com.eter.rutacree.ui.MintChip
 
 private val IncidentType.label: StringResource
     get() = when (this) {
         IncidentType.Accident -> Res.string.panic_type_accident
-        IncidentType.Breakdown -> Res.string.panic_type_breakdown
+        IncidentType.Breakdown, IncidentType.RampFailure -> Res.string.panic_type_breakdown
     }
+
+/** These end the route; a ramp failure has its own button because the bus keeps going. */
+private val emergencyTypes = listOf(IncidentType.Breakdown, IncidentType.Accident)
 
 private val FinalLocation.label: StringResource
     get() = when (this) {
@@ -98,7 +107,7 @@ private val FinalLocation.label: StringResource
 @Composable
 fun DriverReportsScreen(
     state: DriverUiState,
-    onEmergency: (IncidentType) -> Unit,
+    onFailure: (IncidentType) -> Unit,
     onEndShift: (FinalLocation) -> Unit,
 ) {
     var emergencyType by remember { mutableStateOf(IncidentType.Breakdown) }
@@ -119,14 +128,36 @@ fun DriverReportsScreen(
             return@Column
         }
 
+        SectionTitle(stringResource(Res.string.ramp_failure_section))
+        if (state.shift.rampFailureReported) {
+            MintChip(stringResource(Res.string.ramp_failure_done))
+        } else {
+            Text(stringResource(Res.string.ramp_failure_desc), fontSize = 16.sp, color = Neu.TextMuted)
+            Spacer(Modifier.height(12.dp))
+            NeuButton(
+                onClick = { onFailure(IncidentType.RampFailure) },
+                actionLabel = stringResource(Res.string.action_ramp_failure),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            ) {
+                Icon(AppIcons.Accessibility, null, tint = AlertColors.Danger, modifier = Modifier.size(26.dp))
+                Text(
+                    stringResource(Res.string.ramp_failure_button),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Neu.Text,
+                    modifier = Modifier.padding(start = 10.dp),
+                )
+            }
+        }
+
         SectionTitle(stringResource(Res.string.panic_section))
-        NeuSegmented(IncidentType.entries, emergencyType, { stringResource(it.label) }, { emergencyType = it })
+        NeuSegmented(emergencyTypes, emergencyType, { stringResource(it.label) }, { emergencyType = it })
         Spacer(Modifier.height(20.dp))
         SlideToConfirm(
             text = stringResource(Res.string.panic_slider),
             description = stringResource(Res.string.cd_panic_slider, stringResource(emergencyType.label)),
             actionLabel = stringResource(Res.string.action_panic),
-            onConfirm = { onEmergency(emergencyType) },
+            onConfirm = { onFailure(emergencyType) },
         )
 
         SectionTitle(stringResource(Res.string.end_section))

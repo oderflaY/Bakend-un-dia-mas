@@ -43,6 +43,18 @@ class AppSettings(private val store: KeyValueStore) {
         private set
     var language by mutableStateOf(read(LANGUAGE_KEY, AppLanguage.System))
         private set
+
+    /**
+     * Municipio whose routes are shown: null until the user picks one (the app then guesses it from
+     * the GPS), "" for all of them.
+     */
+    var municipality by mutableStateOf(store.get(MUNICIPALITY_KEY))
+        private set
+
+    fun updateMunicipality(value: String?) {
+        municipality = value.orEmpty()
+        store.put(MUNICIPALITY_KEY, municipality)
+    }
     fun updateTheme(value: ThemeMode) {
         theme = value
         store.put(THEME_KEY, value.name)
@@ -59,5 +71,6 @@ class AppSettings(private val store: KeyValueStore) {
     private companion object {
         const val THEME_KEY = "settings.theme"
         const val LANGUAGE_KEY = "settings.language"
+        const val MUNICIPALITY_KEY = "settings.municipality"
     }
 }

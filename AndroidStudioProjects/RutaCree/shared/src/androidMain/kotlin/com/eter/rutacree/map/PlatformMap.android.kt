@@ -25,6 +25,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.eter.rutacree.transit.AppConfig
 import com.eter.rutacree.transit.GeoPoint
+import com.eter.rutacree.transit.INBOUND_COLOR_HEX
+import com.eter.rutacree.transit.OUTBOUND_COLOR_HEX
 import com.eter.rutacree.ui.Neu
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -44,6 +46,7 @@ import org.maplibre.android.style.layers.PropertyFactory.lineCap
 import org.maplibre.android.style.layers.PropertyFactory.lineColor
 import org.maplibre.android.style.layers.PropertyFactory.lineDasharray
 import org.maplibre.android.style.layers.PropertyFactory.lineJoin
+import org.maplibre.android.style.layers.PropertyFactory.lineOffset
 import org.maplibre.android.style.layers.PropertyFactory.lineOpacity
 import org.maplibre.android.style.layers.PropertyFactory.lineWidth
 import org.maplibre.android.style.sources.GeoJsonSource
@@ -71,7 +74,15 @@ private fun line(points: List<GeoPoint>): FeatureCollection =
 private fun dots(points: List<GeoPoint>): FeatureCollection =
     FeatureCollection.fromFeatures(points.map { Feature.fromGeometry(it.toPoint()) })
 
-private class MapColors(val route: Int, val stop: Int, val selected: Int, val guide: Int, val halo: Int)
+private class MapColors(
+    val route: Int,
+    val outbound: Int,
+    val inbound: Int,
+    val stop: Int,
+    val selected: Int,
+    val guide: Int,
+    val halo: Int,
+)
 
 /** Keeps the MapLibre view, its loaded style and the latest content in step. */
 private class MapHolder(context: Context) {
@@ -131,13 +142,21 @@ private class MapHolder(context: Context) {
     }
 
     private fun addLayers(s: Style, c: MapColors) {
-        listOf("guide", "route", "stops", "stop-selected", "user").forEach { id ->
+        listOf("guide", "route", "route-return", "stops", "stop-selected", "user").forEach { id ->
             s.getLayer(id)?.let(s::removeLayer)
             if (s.getSource(id) == null) s.addSource(GeoJsonSource(id))
         }
+        // Each leg is shifted to its right, like traffic lanes: on a street both legs share,
+        // ida and regreso run side by side instead of one hiding the other.
+        s.addLayer(
+            LineLayer("route-return", "route-return").withProperties(
+                lineColor(c.inbound), lineWidth(5f), lineOffset(3f), lineOpacity(0.95f),
+                lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
+            )
+        )
         s.addLayer(
             LineLayer("route", "route").withProperties(
-                lineColor(c.route), lineWidth(7f), lineOpacity(0.95f),
+                lineColor(c.outbound), lineWidth(5f), lineOffset(3f), lineOpacity(0.95f),
                 lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
             )
         )
@@ -166,7 +185,8 @@ private class MapHolder(context: Context) {
 
     private fun render(s: Style, content: MapContent) {
         fun set(id: String, data: FeatureCollection) = (s.getSource(id) as? GeoJsonSource)?.setGeoJson(data)
-        set("route", line(content.route?.geometry?.points.orEmpty()))
+        set("route", line(content.route?.outbound.orEmpty()))
+        set("route-return", line(content.route?.inbound.orEmpty()))
         set("guide", line(content.guidance))
         set("stops", dots(content.stops.filter { it.id != content.selectedStopId }.map { it.point }))
         set("stop-selected", dots(content.stops.filter { it.id == content.selectedStopId }.map { it.point }))
@@ -242,6 +262,8 @@ actual fun PlatformMap(config: AppConfig, content: MapContent, modifier: Modifie
     val routeColor = content.route?.let { parseHexColor(it.colorHex) } ?: palette.blue
     val colors = MapColors(
         route = routeColor.toArgb(),
+        outbound = parseHexColor(OUTBOUND_COLOR_HEX).toArgb(),
+        inbound = parseHexColor(INBOUND_COLOR_HEX).toArgb(),
         stop = palette.stopFill.toArgb(),
         selected = palette.mint.toArgb(),
         guide = palette.blueOnBg.toArgb(),

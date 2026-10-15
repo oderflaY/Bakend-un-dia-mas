@@ -4,6 +4,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -42,9 +44,10 @@ private fun parseClock(text: String): Int? {
     return h * 60 + m
 }
 
-enum class IncidentType { Accident, Breakdown }
+/** [RampFailure]: the bus keeps its route but can't board wheelchairs; the others take it off the route. */
+enum class IncidentType { Accident, Breakdown, RampFailure }
 
-/** A bus that can no longer serve its route (from a Traccar alarm or a driver's panic report). */
+/** A bus that can no longer serve its route, or its riders who need the ramp (Traccar alarm or driver report). */
 data class Incident(
     val id: String,
     val deviceId: Long,
@@ -59,7 +62,26 @@ class TransitRoute(
     val colorHex: String,
     val geometry: RouteGeometry,
     val stops: List<Stop>,
-)
+    /** Municipios the route serves; empty when the server doesn't say (shown everywhere). */
+    val municipalities: List<String> = emptyList(),
+    /** Index in [geometry] where the return trip starts; null for a one-way line. */
+    val returnStartIndex: Int? = null,
+) {
+    /** Outbound leg (ida): the whole line when the route has no return. */
+    val outbound: List<GeoPoint>
+        get() = returnStartIndex?.let { geometry.points.subList(0, it + 1) } ?: geometry.points
+
+    /** Return leg (regreso), sharing its first point with the end of [outbound]. */
+    val inbound: List<GeoPoint>
+        get() = returnStartIndex?.let { geometry.points.subList(it, geometry.points.size) } ?: emptyList()
+
+    fun servesMunicipality(municipality: String?): Boolean =
+        municipality == null || municipalities.isEmpty() || municipality in municipalities
+}
+
+/** Map colors for each direction, the same on every route so riders learn them once. */
+const val OUTBOUND_COLOR_HEX = "#1E88E5"
+const val INBOUND_COLOR_HEX = "#F57C00"
 
 /** A live vehicle as delivered by Traccar (or the simulator), already tied to a route. */
 data class BusPosition(
@@ -121,8 +143,8 @@ fun nearestStop(location: GeoPoint, stops: List<Stop>): Geofence? =
     stops.map { Geofence(it, distanceMeters(location, it.point)) }.minByOrNull { it.distanceMeters }
 
 /**
- * Parses a GeoJSON FeatureCollection with one LineString (the route, with `id`, `name`, `color`)
- * and Point features for the stops (with `name` and `accessible`).
+ * Parses a GeoJSON FeatureCollection with one LineString (the route, with `id`, `name`, `color`, and
+ * from the server `municipios` and `regreso_desde`) and Point features for the stops (with `name` and `accessible`).
  */
 fun parseRouteGeoJson(text: String): TransitRoute {
     val features = Json.parseToJsonElement(text).jsonObject["features"]!!.jsonArray.map { it.jsonObject }
@@ -149,6 +171,9 @@ fun parseRouteGeoJson(text: String): TransitRoute {
         colorHex = props["color"]?.jsonPrimitive?.content ?: "#8ECAE6",
         geometry = geometry,
         stops = stops,
+        municipalities = (props["municipios"] as? JsonArray)?.mapNotNull { it.jsonPrimitive.contentOrNull }.orEmpty(),
+        returnStartIndex = props["regreso_desde"]?.jsonPrimitive?.intOrNull
+            ?.takeIf { it in 1 until geometry.points.size - 1 },
     )
 }
 

@@ -34,6 +34,11 @@ data class AppConfig(
     val mapboxDarkStyleUrl: String = "",
     /** RutaCree backend, e.g. `http://192.168.1.10:8080`; blank runs the app in simulation mode. */
     val apiBaseUrl: String = "",
+    /**
+     * Temporary, for demos: while a route is open the driver's phone sends its GPS as the bus position.
+     * The server prefers the bus's own tracker (Traccar) whenever it reports, so this is a fallback.
+     */
+    val driverPhoneTracking: Boolean = true,
 ) {
     fun styleUrl(dark: Boolean): String =
         if (dark) mapboxDarkStyleUrl.ifBlank { "mapbox://styles/mapbox/dark-v11" }
@@ -50,9 +55,12 @@ object RouteRepository {
         files.map { parseRouteGeoJson(Res.readBytes(it).decodeToString()) }
     }
 
-    /** Server routes when a backend is configured; the bundled copy if it is unreachable. */
+    /**
+     * Server routes when a backend is configured, even an empty list (no routes published yet:
+     * the map still shows the city); the bundled copy only if the server is unreachable.
+     */
     suspend fun load(api: RutaCreeApi?): List<TransitRoute> =
-        api?.let { runCatching { it.routes() }.getOrNull()?.takeIf { routes -> routes.isNotEmpty() } } ?: loadBundled()
+        api?.let { runCatching { it.routes() }.getOrNull() } ?: loadBundled()
 }
 
 enum class RampFlow { Idle, Sending, WaitingDriver, Acknowledged, Failed }
@@ -65,7 +73,12 @@ data class TripUiState(val route: TransitRoute, val progress: TripProgress?)
 
 data class TransitUiState(
     val loading: Boolean = true,
+    /** Routes of the chosen [municipality] (all of them when none is chosen). */
     val routes: List<TransitRoute> = emptyList(),
+    /** Municipios with routes; the picker is shown only when there is more than one. */
+    val municipalities: List<String> = emptyList(),
+    /** null shows every municipio. */
+    val municipality: String? = null,
     val route: TransitRoute? = null,
     val stop: Stop? = null,
     /** Buses of the selected route with a working ramp; the only ones the rider can board. */
@@ -86,6 +99,8 @@ data class TransitUiState(
     /** False while the live socket is down; the map keeps the last known positions. */
     val online: Boolean = true,
     val loadFailed: Boolean = false,
+    /** Routes loaded but none is published: the map shows the city with nothing on it. */
+    val noRoutes: Boolean = false,
 )
 
 sealed interface TripAlert {
@@ -95,7 +110,11 @@ sealed interface TripAlert {
 
 private data class Inputs(
     val routes: List<TransitRoute> = emptyList(),
+    val routesLoaded: Boolean = false,
     val loadFailed: Boolean = false,
+    val municipality: String? = null,
+    /** Picked by the rider (now or in an earlier session): the GPS no longer changes it. */
+    val municipalityChosen: Boolean = false,
     val routeId: String? = null,
     val stopId: String? = null,
     val stopChosenByUser: Boolean = false,
@@ -145,8 +164,12 @@ class TransitViewModel(private val config: AppConfig) : ViewModel() {
                 inputs.update { it.copy(loadFailed = true) }
                 return@launch
             }
-            inputs.update { it.copy(routes = loaded) }
-            applyRoute(loaded.firstOrNull { it.id == DEFAULT_ROUTE_ID }?.id ?: loaded.first().id, byUser = false)
+            inputs.update { it.copy(routes = loaded, routesLoaded = true) }
+            if (loaded.isNotEmpty()) {
+                applyRoute(loaded.firstOrNull { it.id == DEFAULT_ROUTE_ID }?.id ?: loaded.first().id, byUser = false)
+            }
+            guessMunicipality(inputs.value.location)
+            keepRouteInMunicipality()
             nearestStopTo(inputs.value.location)
             val feed = if (api != null) TraccarSocketFeed(api.publicSocketUrl) else SimulatedFeed(loaded)
             feed.updates.collect(::onFeedUpdate)
@@ -217,6 +240,34 @@ class TransitViewModel(private val config: AppConfig) : ViewModel() {
 
     fun selectRoute(routeId: String) = applyRoute(routeId, byUser = true)
 
+    /**
+     * Shows only the routes of [municipality] (null: all). Also used to restore a saved choice:
+     * once chosen, the GPS no longer guesses it.
+     */
+    fun selectMunicipality(municipality: String?) {
+        inputs.update { it.copy(municipality = municipality, municipalityChosen = true) }
+        keepRouteInMunicipality()
+    }
+
+    /** After a municipio change, moves to a route that serves it (nearest stop to the rider first). */
+    private fun keepRouteInMunicipality() {
+        val current = inputs.value
+        val visible = current.routes.filter { it.servesMunicipality(current.municipality) }
+        if (visible.isEmpty() || visible.any { it.id == current.routeId }) return
+        inputs.update { it.copy(stopChosenByUser = false) }
+        applyRoute(visible.first().id, byUser = false)
+        nearestStopTo(current.location)
+    }
+
+    private fun guessMunicipality(location: GeoPoint?) {
+        if (location == null) return
+        val current = inputs.value
+        if (current.municipalityChosen || current.routes.isEmpty()) return
+        val guess = municipalityAt(location, current.routes) ?: return
+        inputs.update { it.copy(municipality = guess) }
+        keepRouteInMunicipality()
+    }
+
     private fun applyRoute(routeId: String, byUser: Boolean) = inputs.update { current ->
         val route = current.routes.firstOrNull { it.id == routeId } ?: return@update current
         val currentName = current.routes.flatMap { it.stops }.firstOrNull { it.id == current.stopId }?.name
@@ -233,7 +284,10 @@ class TransitViewModel(private val config: AppConfig) : ViewModel() {
     fun updateUserLocation(location: GeoPoint?) {
         val first = inputs.value.location == null && location != null
         inputs.update { it.copy(location = location) }
-        if (first) nearestStopTo(location)
+        if (first) {
+            guessMunicipality(location)
+            nearestStopTo(location)
+        }
     }
 
     private fun nearestStopTo(location: GeoPoint?) {
@@ -241,6 +295,7 @@ class TransitViewModel(private val config: AppConfig) : ViewModel() {
         inputs.update { current ->
             if (current.stopChosenByUser) return@update current
             val best = current.routes
+                .filter { it.servesMunicipality(current.municipality) }
                 .flatMap { route -> route.stops.filter { it.accessible }.map { route to it } }
                 .minByOrNull { (_, stop) -> distanceMeters(location, stop.point) }
                 ?: return@update current
@@ -333,7 +388,7 @@ class TransitViewModel(private val config: AppConfig) : ViewModel() {
         val current = inputs.value
         val affected = current.incident?.routeId ?: current.routeId
         val stopName = current.routes.flatMap { it.stops }.firstOrNull { it.id == current.stopId }?.name
-        val others = current.routes.filter { it.id != affected }
+        val others = current.routes.filter { it.id != affected && it.servesMunicipality(current.municipality) }
         val alternative = others.firstOrNull { route -> route.stops.any { it.name == stopName && it.accessible } }
             ?: others.firstOrNull()
         inputs.update { it.copy(incident = null) }
@@ -352,8 +407,10 @@ class TransitViewModel(private val config: AppConfig) : ViewModel() {
             .filter { it.routeId == route.id && it.rampOperational }
             .mapNotNull { route.place(it, speeds[it.deviceId] ?: it.speedKmh) }
         return TransitUiState(
-            loading = routes.isEmpty() && !loadFailed,
-            routes = routes,
+            loading = !routesLoaded && !loadFailed,
+            routes = routes.filter { it.servesMunicipality(municipality) },
+            municipalities = municipalitiesOf(routes),
+            municipality = municipality,
             route = route,
             stop = stop,
             buses = buses,
@@ -371,6 +428,7 @@ class TransitViewModel(private val config: AppConfig) : ViewModel() {
             live = config.isLive,
             online = online,
             loadFailed = loadFailed,
+            noRoutes = routesLoaded && routes.isEmpty(),
         )
     }
 

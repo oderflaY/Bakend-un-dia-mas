@@ -37,8 +37,13 @@ struct TransitMapView: View {
     var body: some View {
         Map(position: $position, interactionModes: [.pan, .zoom]) {
             if let route = model.route {
-                MapPolyline(coordinates: route.geometry.points.map(\.coordinate))
-                    .stroke(Color(hexString: route.colorHex), style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
+                // Return first, so the outbound color wins where both legs share a street.
+                if !route.inbound.isEmpty {
+                    MapPolyline(coordinates: route.inbound.map(\.coordinate))
+                        .stroke(Color(hexString: DirectionLegend.inboundHex), style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
+                }
+                MapPolyline(coordinates: route.outbound.map(\.coordinate))
+                    .stroke(Color(hexString: DirectionLegend.outboundHex), style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
             }
             if model.guidance.count >= 2 {
                 MapPolyline(coordinates: model.guidance.map(\.coordinate))
@@ -68,6 +73,7 @@ struct TransitMapView: View {
         .onChange(of: cameraKey) {
             withAnimation(.easeInOut(duration: 0.9)) { position = camera }
         }
+        .overlay(alignment: .topTrailing) { DirectionLegend(route: model.route).padding(10) }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityDescription)
     }
@@ -110,6 +116,34 @@ struct TransitMapView: View {
         let height = max(maxY - minY, minSide)
         let rect = MKMapRect(x: (minX + maxX - width) / 2, y: (minY + maxY - height) / 2, width: width, height: height)
         return rect.insetBy(dx: -width * 0.18, dy: -height * 0.18)
+    }
+}
+
+/// Key for the two line colors; only for routes that come back (have a return leg).
+struct DirectionLegend: View {
+    /// Same colors as OUTBOUND_COLOR_HEX / INBOUND_COLOR_HEX in transit/Transit.kt.
+    static let outboundHex = "#1E88E5"
+    static let inboundHex = "#F57C00"
+    @Environment(\.neu) private var neu
+    let route: TransitRoute?
+
+    var body: some View {
+        if route?.returnStartIndex != nil {
+            HStack(spacing: 12) {
+                item(Self.outboundHex, L10n.t("map_outbound"))
+                item(Self.inboundHex, L10n.t("map_inbound"))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .neuCard(Capsule(), distance: 4)
+        }
+    }
+
+    private func item(_ hex: String, _ label: String) -> some View {
+        HStack(spacing: 6) {
+            Capsule().fill(Color(hexString: hex)).frame(width: 18, height: 5)
+            Text(label).font(.system(size: 13, weight: .semibold)).foregroundStyle(neu.text)
+        }
     }
 }
 

@@ -1,6 +1,5 @@
 package com.eter.rutacree.api
 
-import com.eter.rutacree.transit.GeoPoint
 import com.eter.rutacree.transit.RampRequest
 import com.eter.rutacree.transit.TransitRoute
 import com.eter.rutacree.transit.parseRouteGeoJson
@@ -52,24 +51,8 @@ data class DriverSession(
     val routeId: String,
     val driverName: String,
     val rampOperational: Boolean,
-    /** "traccar" when the bus position comes from Traccar Client on the driver's phone. */
-    val positionSource: String = "app",
-    val trackerDeviceId: String? = null,
-    val trackerUrl: String? = null,
-) {
-    val usesTraccar: Boolean get() = positionSource == "traccar"
-}
-
-@Serializable
-data class TrackerStatus(
-    val positionSource: String = "app",
-    val trackerDeviceId: String? = null,
-    val trackerUrl: String? = null,
-    val trackerConnected: Boolean = false,
-    /** Age of Traccar Client's last fix. */
-    val lastFixAgeSeconds: Int? = null,
-    /** Age of the bus's last position from any source (Traccar Client or this app's GPS). */
-    val busFixAgeSeconds: Int? = null,
+    /** Dispatch's WhatsApp (digits with country code); empty lets WhatsApp ask for the chat. */
+    val whatsapp: String = "",
 )
 
 @Serializable
@@ -92,6 +75,23 @@ data class RiderSession(val token: String, val rider: RiderProfile)
 
 @Serializable
 data class DriverInfo(val id: String, val name: String, val email: String = "")
+
+/** Who is on board when a route starts, as the driver counts them. */
+@Serializable
+/**
+ * Users on board when a trip (vuelta) starts, in the categories of the DIF's weekly log: men and women
+ * (the total), and which of them are people with a disability, older adults, pregnant or companions.
+ */
+data class Passengers(
+    val men: Int = 0,
+    val women: Int = 0,
+    val disability: Int = 0,
+    val elderly: Int = 0,
+    val pregnant: Int = 0,
+    val companions: Int = 0,
+) {
+    val total: Int get() = men + women
+}
 
 /** A signed-in driver without a shift yet: the token only allows starting a shift. */
 @Serializable
@@ -210,37 +210,41 @@ class RutaCreeApi(baseUrl: String) {
 
     // ---- driver ----
 
-    suspend fun trackerStatus(session: DriverSession): TrackerStatus =
-        json.decodeFromString(call { client.get("$base/api/v1/driver/tracker") { bearerAuth(session.token) } })
-
-
     suspend fun driverMe(accountToken: String): DriverInfo =
         json.decodeFromString(call { client.get("$base/api/v1/driver/me") { bearerAuth(accountToken) } })
 
-    suspend fun startShift(accountToken: String, busNumber: String, routeId: String): DriverSession =
+    /** The bus position comes from its own GPS in Traccar; the driver only says who is on board. */
+    suspend fun startShift(accountToken: String, busNumber: String, routeId: String, passengers: Passengers): DriverSession =
         json.decodeFromString(
             call {
                 client.post("$base/api/v1/driver/shifts") {
                     bearerAuth(accountToken)
-                    jsonBody(ShiftBody(busNumber, routeId))
+                    jsonBody(
+                        ShiftBody(
+                            busNumber, routeId, passengers.men, passengers.women, passengers.disability,
+                            passengers.elderly, passengers.pregnant, passengers.companions,
+                        )
+                    )
                 }
             }
         )
 
-    suspend fun reportPosition(session: DriverSession, point: GeoPoint, speedKmh: Double) {
+    /** The phone's GPS as the bus position (demo fallback while the bus has no tracker of its own). */
+    suspend fun sendPosition(session: DriverSession, lat: Double, lon: Double, speedKmh: Double) {
         call {
             client.post("$base/api/v1/driver/positions") {
                 bearerAuth(session.token)
-                jsonBody(PositionBody(point.lat, point.lon, speedKmh.coerceIn(0.0, 200.0)))
+                jsonBody(PositionBody(lat, lon, speedKmh))
             }
         }
     }
 
-    suspend fun reportIncident(session: DriverSession, accident: Boolean) {
+    /** [type] is "accident" or "breakdown" (both end the shift) or "ramp_failure". */
+    suspend fun reportIncident(session: DriverSession, type: String) {
         call {
             client.post("$base/api/v1/driver/incidents") {
                 bearerAuth(session.token)
-                jsonBody(IncidentBody(if (accident) "accident" else "breakdown"))
+                jsonBody(IncidentBody(type))
             }
         }
     }
@@ -324,9 +328,19 @@ class RutaCreeApi(baseUrl: String) {
     @Serializable private data class RampBody(val routeId: String, val stopId: String)
     @Serializable private data class StatusBody(val status: String)
     @Serializable private data class ReportBody(val type: String, val routeId: String?, val busId: Long?, val comment: String)
-    @Serializable private data class ShiftBody(val busNumber: String, val routeId: String)
-    @Serializable private data class PositionBody(val lat: Double, val lon: Double, val speedKmh: Double)
+    @Serializable
+    private data class ShiftBody(
+        val busNumber: String,
+        val routeId: String,
+        val men: Int,
+        val women: Int,
+        val disability: Int,
+        val elderly: Int,
+        val pregnant: Int,
+        val companions: Int,
+    )
     @Serializable private data class IncidentBody(val type: String)
+    @Serializable private data class PositionBody(val lat: Double, val lon: Double, val speedKmh: Double)
     @Serializable private data class EndShiftBody(val finalLocation: String)
     @Serializable private data class ErrorBody(val error: String = "", val message: String = "")
 
