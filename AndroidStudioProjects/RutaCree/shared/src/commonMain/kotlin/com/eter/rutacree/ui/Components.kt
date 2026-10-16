@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.sp
 
 /** Alert colors kept high-contrast in both themes (WCAG AA against their own fills). */
 object AlertColors {
-    val Danger = Color(0xFFE5484D)
-    val Warning = Color(0xFFF5C451)
+    val Danger = Color(0xFFE31E31) // rojo DIF
+    val Warning = Color(0xFFF8C817) // amarillo DIF
     val OnWarning = Color(0xFF1C1C1C)
     val OnDanger = Color(0xFFFFFFFF)
 }

@@ -80,8 +80,8 @@ class TransitRoute(
 }
 
 /** Map colors for each direction, the same on every route so riders learn them once. */
-const val OUTBOUND_COLOR_HEX = "#1E88E5"
-const val INBOUND_COLOR_HEX = "#F57C00"
+const val OUTBOUND_COLOR_HEX = "#2F5DA8" // azul DIF
+const val INBOUND_COLOR_HEX = "#F19025" // naranja DIF
 
 /** A live vehicle as delivered by Traccar (or the simulator), already tied to a route. */
 data class BusPosition(
@@ -168,7 +168,7 @@ fun parseRouteGeoJson(text: String): TransitRoute {
     return TransitRoute(
         id = props["id"]!!.jsonPrimitive.content,
         name = props["name"]!!.jsonPrimitive.content,
-        colorHex = props["color"]?.jsonPrimitive?.content ?: "#8ECAE6",
+        colorHex = props["color"]?.jsonPrimitive?.content ?: "#2F5DA8",
         geometry = geometry,
         stops = stops,
         municipalities = (props["municipios"] as? JsonArray)?.mapNotNull { it.jsonPrimitive.contentOrNull }.orEmpty(),

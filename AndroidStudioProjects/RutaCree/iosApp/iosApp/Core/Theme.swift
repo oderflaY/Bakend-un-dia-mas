@@ -23,27 +23,28 @@ struct NeuPalette {
         isDark: false,
         bg: Color(hex: 0xE6ECF5), shadowDark: Color(hex: 0xC5CBD5), shadowLight: .white,
         text: Color(hex: 0x2C3E50), textMuted: Color(hex: 0x5A6C7D),
-        mint: Color(hex: 0xA8E6CF), blue: Color(hex: 0x8ECAE6),
-        mintOnBg: Color(hex: 0x145A41), blueOnBg: Color(hex: 0x1A7FA0),
-        chipBg: Color(hex: 0xA8E6CF), chipText: Color(hex: 0x145A41),
-        onBlue: Color(hex: 0x1C2A33), mapGrid: Color(hex: 0xF3F6FA), stopFill: .white
+        // Colores DIF Durango: azul principal, magenta secundario (igual que Neumorphism.kt).
+        mint: Color(hex: 0xD91178), blue: Color(hex: 0x2F5DA8),
+        mintOnBg: Color(hex: 0xB80E66), blueOnBg: Color(hex: 0x2A55A0),
+        chipBg: Color(hex: 0xF7D3E5), chipText: Color(hex: 0x9C1866),
+        onBlue: .white, mapGrid: Color(hex: 0xF3F6FA), stopFill: .white
     )
 
     static let dark = NeuPalette(
         isDark: true,
         bg: Color(hex: 0x292D32), shadowDark: Color(hex: 0x1A1D20), shadowLight: Color(hex: 0x383D44),
         text: Color(hex: 0xE6ECF5), textMuted: Color(hex: 0xA9B4C2),
-        mint: Color(hex: 0xA8E6CF), blue: Color(hex: 0x8ECAE6),
-        mintOnBg: Color(hex: 0xA8E6CF), blueOnBg: Color(hex: 0x8ECAE6),
-        chipBg: Color(hex: 0xA8E6CF).opacity(0.16), chipText: Color(hex: 0xA8E6CF),
-        onBlue: Color(hex: 0x1C2A33), mapGrid: Color(hex: 0x33383E), stopFill: Color(hex: 0x292D32)
+        mint: Color(hex: 0xF56AAE), blue: Color(hex: 0x7FA6EE),
+        mintOnBg: Color(hex: 0xF56AAE), blueOnBg: Color(hex: 0x7FA6EE),
+        chipBg: Color(hex: 0xD91178).opacity(0.2), chipText: Color(hex: 0xF56AAE),
+        onBlue: Color(hex: 0x0D1B33), mapGrid: Color(hex: 0x33383E), stopFill: Color(hex: 0x292D32)
     )
 }
 
 /// High-contrast alert colors, legible in both themes.
 enum AlertColors {
-    static let danger = Color(hex: 0xE5484D)
-    static let warning = Color(hex: 0xF5C451)
+    static let danger = Color(hex: 0xE31E31)
+    static let warning = Color(hex: 0xF8C817)
     static let onWarning = Color(hex: 0x1C1C1C)
     static let onDanger = Color.white
 }
@@ -70,7 +71,7 @@ extension Color {
 
     /// "#8ECAE6" as used by the route files.
     init(hexString: String) {
-        self.init(hex: UInt32(hexString.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16) ?? 0x8ECAE6)
+        self.init(hex: UInt32(hexString.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16) ?? 0x2F5DA8)
     }
 }
 

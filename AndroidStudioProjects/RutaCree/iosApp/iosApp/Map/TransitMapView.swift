@@ -53,7 +53,7 @@ struct TransitMapView: View {
                 Annotation(stop.name, coordinate: stop.point.coordinate, anchor: .center) {
                     StopDot(
                         selected: stop.id == model.selectedStopId,
-                        ring: Color(hexString: model.route?.colorHex ?? "#8ECAE6")
+                        ring: Color(hexString: model.route?.colorHex ?? "#2F5DA8")
                     )
                 }
                 .annotationTitles(.hidden)
@@ -122,8 +122,8 @@ struct TransitMapView: View {
 /// Key for the two line colors; only for routes that come back (have a return leg).
 struct DirectionLegend: View {
     /// Same colors as OUTBOUND_COLOR_HEX / INBOUND_COLOR_HEX in transit/Transit.kt.
-    static let outboundHex = "#1E88E5"
-    static let inboundHex = "#F57C00"
+    static let outboundHex = "#2F5DA8"
+    static let inboundHex = "#F19025"
     @Environment(\.neu) private var neu
     let route: TransitRoute?
 
