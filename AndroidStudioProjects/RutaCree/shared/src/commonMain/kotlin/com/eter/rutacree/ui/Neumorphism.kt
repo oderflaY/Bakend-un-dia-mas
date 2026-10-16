@@ -2,6 +2,7 @@ package com.eter.rutacree.ui
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -154,6 +155,8 @@ fun Modifier.neuCard(
         .dropShadow(shape, Shadow(radius = distance * 2, color = p.shadowDark, offset = DpOffset(distance, distance)))
         .dropShadow(shape, Shadow(radius = distance * 2, color = p.shadowLight, offset = DpOffset(-distance, -distance)))
         .background(color, shape)
+        // En oscuro, un filo de luz en el borde (como las tarjetas del panel) para que no se pierdan en el fondo.
+        .then(if (p.isDark) Modifier.border(1.dp, Color.White.copy(alpha = 0.05f), shape) else Modifier)
 }
 
 @Composable
@@ -246,7 +249,7 @@ fun NeuSwitch(checked: Boolean, modifier: Modifier = Modifier) {
                 .offset(x = knobOffset)
                 .size(28.dp)
                 .then(
-                    if (checked) Modifier.background(Neu.Mint, CircleShape)
+                    if (checked) Modifier.background(Neu.Blue, CircleShape)
                     else Modifier.neuCard(CircleShape, 2.dp)
                 )
         )
@@ -328,18 +331,10 @@ fun NeuTextField(
     }
 }
 
+/** Título de sección con la barrita del color de la pantalla, como en el panel web. */
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text.uppercase(),
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 1.sp,
-        color = Neu.TextMuted,
-        modifier = modifier
-            .padding(start = 4.dp, top = 28.dp, bottom = 14.dp)
-            .semantics { heading() },
-    )
+    AccentTitle(text, modifier.padding(start = 2.dp, top = 28.dp, bottom = 14.dp))
 }
 
 @Composable
@@ -364,10 +359,10 @@ fun MintChip(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun ScreenHeader(title: String, subtitle: String? = null) {
-    Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
         Text(
             title,
-            fontSize = 26.sp,
+            fontSize = 25.sp,
             fontWeight = FontWeight.Bold,
             color = Neu.Text,
             modifier = Modifier.semantics { heading() },

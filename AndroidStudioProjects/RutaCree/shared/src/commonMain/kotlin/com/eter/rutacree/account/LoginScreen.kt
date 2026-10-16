@@ -128,9 +128,10 @@ fun LoginScreen(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(16.dp))
-        Box(Modifier.size(88.dp).neuCard(CircleShape, 8.dp), contentAlignment = Alignment.Center) {
-            Icon(AppIcons.Bus, null, tint = Neu.Mint, modifier = Modifier.size(46.dp))
+        com.eter.rutacree.ui.DifStripe(Modifier.padding(top = 8.dp))
+        Spacer(Modifier.height(28.dp))
+        Box(Modifier.size(112.dp).neuCard(CircleShape, 8.dp), contentAlignment = Alignment.Center) {
+            com.eter.rutacree.ui.DifLogo(size = 58.dp)
         }
         Spacer(Modifier.height(16.dp))
         Text(

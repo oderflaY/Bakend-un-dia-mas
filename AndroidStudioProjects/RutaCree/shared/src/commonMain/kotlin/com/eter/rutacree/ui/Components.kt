@@ -70,7 +70,7 @@ fun <T> NeuSegmented(
                 Modifier
                     .widthIn(min = 96.dp)
                     .heightIn(min = 56.dp)
-                    .then(if (isSelected) Modifier.neuInset() else Modifier.neuCard(distance = 5.dp))
+                    .then(if (isSelected) Modifier.background(tint(Neu.Blue, 0.18f), CardShape).neuInsetShadow(CardShape, 3.dp) else Modifier.neuCard(distance = 5.dp))
                     .clip(CardShape)
                     .selectable(isSelected, role = Role.RadioButton) { onSelect(option) }
                     .padding(horizontal = 18.dp, vertical = 8.dp),

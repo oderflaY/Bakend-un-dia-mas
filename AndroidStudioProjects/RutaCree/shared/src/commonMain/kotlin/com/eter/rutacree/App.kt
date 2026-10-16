@@ -88,7 +88,11 @@ import com.eter.rutacree.settings.rememberKeyValueStore
 import com.eter.rutacree.transit.AppConfig
 import com.eter.rutacree.transit.TripAlert
 import com.eter.rutacree.transit.TransitViewModel
+import com.eter.rutacree.ui.AppHeader
 import com.eter.rutacree.ui.AppIcons
+import com.eter.rutacree.ui.DifColor
+import com.eter.rutacree.ui.SectionColor
+import com.eter.rutacree.ui.tint
 import com.eter.rutacree.ui.DarkNeuPalette
 import com.eter.rutacree.ui.LightNeuPalette
 import com.eter.rutacree.ui.LocalNeuPalette
@@ -118,19 +122,20 @@ import rutacree.shared.generated.resources.tab_trip
 import rutacree.shared.generated.resources.tts_arrived
 import rutacree.shared.generated.resources.tts_prepare_exit
 
-enum class Tab(val label: StringResource, val icon: ImageVector) {
-    Radar(Res.string.tab_radar, AppIcons.MapPin),
-    Rutas(Res.string.tab_routes, AppIcons.Navigate),
-    Rampa(Res.string.tab_ramp, AppIcons.Accessibility),
-    Viaje(Res.string.tab_trip, AppIcons.Bus),
-    Reportes(Res.string.tab_reports, AppIcons.Alert),
-    Perfil(Res.string.tab_profile, AppIcons.User),
+// Cada pestaña con su color DIF, como las secciones del panel web.
+enum class Tab(val label: StringResource, val icon: ImageVector, val color: DifColor) {
+    Radar(Res.string.tab_radar, AppIcons.MapPin, DifColor.Azul),
+    Rutas(Res.string.tab_routes, AppIcons.Navigate, DifColor.Amarillo),
+    Rampa(Res.string.tab_ramp, AppIcons.Accessibility, DifColor.Magenta),
+    Viaje(Res.string.tab_trip, AppIcons.Bus, DifColor.Turquesa),
+    Reportes(Res.string.tab_reports, AppIcons.Alert, DifColor.Rojo),
+    Perfil(Res.string.tab_profile, AppIcons.User, DifColor.Gris),
 }
 
-enum class DriverTab(val label: StringResource, val icon: ImageVector) {
-    Turno(Res.string.driver_tab_shift, AppIcons.Bus),
-    Reportes(Res.string.driver_tab_reports, AppIcons.Alert),
-    Ajustes(Res.string.tab_settings, AppIcons.User),
+enum class DriverTab(val label: StringResource, val icon: ImageVector, val color: DifColor) {
+    Turno(Res.string.driver_tab_shift, AppIcons.Bus, DifColor.Naranja),
+    Reportes(Res.string.driver_tab_reports, AppIcons.Alert, DifColor.Rojo),
+    Ajustes(Res.string.tab_settings, AppIcons.User, DifColor.Gris),
 }
 
 @Composable
@@ -285,7 +290,9 @@ private fun PassengerApp(
     }
 
     Column(Modifier.fillMaxSize()) {
+        SectionColor(tab.color) { AppHeader(stringResource(tab.label), tab.icon) }
         Crossfade(tab, Modifier.weight(1f).fillMaxWidth()) { current ->
+          SectionColor(current.color) {
             when (current) {
                 Tab.Radar -> DashboardScreen(
                     config = config,
@@ -330,8 +337,9 @@ private fun PassengerApp(
                     onReviewPermissions = onReviewPermissions,
                 )
             }
+          }
         }
-        BottomBar(Tab.entries, tab, { it.label }, { it.icon }, onTabChange)
+        BottomBar(Tab.entries, tab, { it.label }, { it.icon }, { it.color }, onTabChange)
     }
 
     if (incident != null) {
@@ -406,7 +414,9 @@ private fun DriverApp(
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
+            SectionColor(tab.color) { AppHeader(stringResource(tab.label), tab.icon) }
             Crossfade(tab, Modifier.weight(1f).fillMaxWidth()) { current ->
+              SectionColor(current.color) {
                 when (current) {
                     DriverTab.Turno -> DriverShiftScreen(
                         state = state,
@@ -439,8 +449,9 @@ private fun DriverApp(
                         onReviewPermissions = onReviewPermissions,
                     )
                 }
+              }
             }
-            BottomBar(DriverTab.entries, tab, { it.label }, { it.icon }, onTabChange)
+            BottomBar(DriverTab.entries, tab, { it.label }, { it.icon }, { it.color }, onTabChange)
         }
         if (rampAlert != null) RampAlertOverlay(rampAlert, onAcknowledge = driver::acknowledgeRamp)
     }
@@ -460,45 +471,56 @@ private fun TrackDeviceLocation(services: DeviceServices, onFix: (com.eter.rutac
     LaunchedEffect(services) { services.location.collect { latestOnFix(it) } }
 }
 
+/** Barra de pestañas como el menú del panel: cada ícono en un recuadro de su color; la activa, rellena. */
 @Composable
 private fun <T> BottomBar(
     tabs: List<T>,
     current: T,
     label: (T) -> StringResource,
     icon: (T) -> ImageVector,
+    color: (T) -> DifColor,
     onSelect: (T) -> Unit,
 ) {
     val itemShape = RoundedCornerShape(16.dp)
+    val chipShape = RoundedCornerShape(11.dp)
+    val dark = Neu.palette.isDark
     Row(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 10.dp)
             .neuCard(RoundedCornerShape(24.dp), 6.dp)
             .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         tabs.forEach { tab ->
             val selected = tab == current
-            val color = if (selected) Neu.BlueStrong else Neu.TextMuted
+            val a = color(tab).accent(dark)
             Column(
                 Modifier
                     .weight(1f)
-                    .heightIn(min = 60.dp)
-                    .then(if (selected) Modifier.neuInset(itemShape, 3.dp) else Modifier)
+                    .heightIn(min = 64.dp)
                     .clip(itemShape)
                     // Role.Tab + selected lets TalkBack/VoiceOver announce "Radar, tab, selected, 1 of 5".
                     .selectable(selected, role = Role.Tab) { onSelect(tab) }
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Icon(icon(tab), null, tint = color, modifier = Modifier.size(24.dp))
+                Box(
+                    Modifier
+                        .size(width = 44.dp, height = 32.dp)
+                        .clip(chipShape)
+                        .background(if (selected) a.fill else tint(a.fill, if (dark) 0.2f else 0.15f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(icon(tab), null, tint = if (selected) a.onFill else a.ink, modifier = Modifier.size(20.dp))
+                }
                 Text(
                     stringResource(label(tab)),
                     fontSize = 11.sp,
                     maxLines = 1,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = color,
+                    color = if (selected) a.ink else Neu.TextMuted,
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
