@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -157,7 +158,7 @@ fun App(config: AppConfig = AppConfig()) {
                 ThemeMode.Dark -> true
             }
             ApplySystemTheme(settings.theme, darkTheme)
-            MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
+            MaterialTheme(colorScheme = if (darkTheme) DifDarkScheme else DifLightScheme) {
                 CompositionLocalProvider(
                     LocalNeuPalette provides if (darkTheme) DarkNeuPalette else LightNeuPalette,
                     LocalDeviceServices provides services,
@@ -504,3 +505,16 @@ private fun <T> BottomBar(
         }
     }
 }
+
+// Material (diálogos, campos de texto, menús) con los mismos colores DIF que la paleta neumórfica.
+private val DifLightScheme = lightColorScheme(
+    primary = Color(0xFF2F5DA8), onPrimary = Color.White, secondary = Color(0xFFD91178), onSecondary = Color.White,
+    background = Color(0xFFE6ECF5), surface = Color(0xFFE6ECF5), onBackground = Color(0xFF2C3E50), onSurface = Color(0xFF2C3E50),
+    error = Color(0xFFE31E31),
+)
+private val DifDarkScheme = darkColorScheme(
+    primary = Color(0xFF7FA6EE), onPrimary = Color(0xFF0D1B33), secondary = Color(0xFFF56AAE), onSecondary = Color(0xFF2A0716),
+    background = Color(0xFF161C27), surface = Color(0xFF1B2230), surfaceVariant = Color(0xFF222A38),
+    onBackground = Color(0xFFE8EDF5), onSurface = Color(0xFFE8EDF5), onSurfaceVariant = Color(0xFF98A4B8),
+    outline = Color(0xFF354157), error = Color(0xFFFF6F86),
+)

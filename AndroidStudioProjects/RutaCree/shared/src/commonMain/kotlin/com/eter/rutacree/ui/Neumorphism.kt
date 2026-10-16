@@ -104,14 +104,15 @@ val LightNeuPalette = NeuPalette(
     stopFill = Color(0xFFFFFFFF),
 )
 
+// Modo oscuro «noche DIF» (igual que el panel): azul carbón profundo en vez de gris plano, sombras más
+// suaves y los colores DIF aclarados para leerse sobre el fondo (>5:1); el texto encima va oscuro.
 val DarkNeuPalette = NeuPalette(
     isDark = true,
-    bg = Color(0xFF292D32),
-    shadowDark = Color(0xFF1A1D20),
-    shadowLight = Color(0xFF383D44),
-    text = Color(0xFFE6ECF5),
-    textMuted = Color(0xFFA9B4C2),
-    // Los mismos colores DIF, aclarados para el fondo oscuro (>5:1); el texto encima va oscuro.
+    bg = Color(0xFF161C27),
+    shadowDark = Color(0xFF0A0D13),
+    shadowLight = Color(0xFF222A38),
+    text = Color(0xFFE8EDF5),
+    textMuted = Color(0xFF98A4B8),
     mint = Color(0xFFF56AAE),
     blue = Color(0xFF7FA6EE),
     mintOnBg = Color(0xFFF56AAE),
@@ -119,8 +120,8 @@ val DarkNeuPalette = NeuPalette(
     chipBg = Color(0x33D91178),
     chipText = Color(0xFFF56AAE),
     onBlue = Color(0xFF0D1B33),
-    mapGrid = Color(0xFF33383E),
-    stopFill = Color(0xFF292D32),
+    mapGrid = Color(0xFF1E2532),
+    stopFill = Color(0xFF161C27),
 )
 
 val LocalNeuPalette = staticCompositionLocalOf { LightNeuPalette }

@@ -32,12 +32,12 @@ struct NeuPalette {
 
     static let dark = NeuPalette(
         isDark: true,
-        bg: Color(hex: 0x292D32), shadowDark: Color(hex: 0x1A1D20), shadowLight: Color(hex: 0x383D44),
-        text: Color(hex: 0xE6ECF5), textMuted: Color(hex: 0xA9B4C2),
+        bg: Color(hex: 0x161C27), shadowDark: Color(hex: 0x0A0D13), shadowLight: Color(hex: 0x222A38),
+        text: Color(hex: 0xE8EDF5), textMuted: Color(hex: 0x98A4B8),
         mint: Color(hex: 0xF56AAE), blue: Color(hex: 0x7FA6EE),
         mintOnBg: Color(hex: 0xF56AAE), blueOnBg: Color(hex: 0x7FA6EE),
         chipBg: Color(hex: 0xD91178).opacity(0.2), chipText: Color(hex: 0xF56AAE),
-        onBlue: Color(hex: 0x0D1B33), mapGrid: Color(hex: 0x33383E), stopFill: Color(hex: 0x292D32)
+        onBlue: Color(hex: 0x0D1B33), mapGrid: Color(hex: 0x1E2532), stopFill: Color(hex: 0x161C27)
     )
 }
 
