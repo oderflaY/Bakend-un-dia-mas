@@ -45,7 +45,9 @@ android {
         buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"${secret("MAPBOX_ACCESS_TOKEN")}\"")
         buildConfigField("String", "MAPBOX_STYLE_URL", "\"${secret("MAPBOX_STYLE_URL")}\"")
         buildConfigField("String", "MAPBOX_DARK_STYLE_URL", "\"${secret("MAPBOX_DARK_STYLE_URL")}\"")
-        buildConfigField("String", "API_BASE_URL", "\"${secret("API_BASE_URL")}\"")
+        // Production by IP, not by name: the university network (Fortinet) blocks sslip.io as
+        // "Dynamic DNS"; the bare IP with a Let's Encrypt IP certificate works there and anywhere.
+        buildConfigField("String", "API_BASE_URL", "\"${secret("API_BASE_URL").ifBlank { "https://2.25.68.28" }}\"")
     }
     packaging {
         resources {
