@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eter.rutacree.map.CITY_CENTER
 import com.eter.rutacree.map.CITY_ZOOM
+import com.eter.rutacree.map.STOP_ZOOM
 import com.eter.rutacree.map.DirectionLegend
 import com.eter.rutacree.map.MapContent
 import com.eter.rutacree.map.PlatformMap
@@ -151,7 +152,7 @@ fun DashboardScreen(
     onOpenProfile: () -> Unit,
     onSelectMunicipality: (String?) -> Unit = {},
 ) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
         Row(
             Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -201,7 +202,13 @@ fun DashboardScreen(
                     buses = buses,
                     userLocation = state.userLocation,
                     focus = state.stop?.point ?: CITY_CENTER.takeIf { state.noRoutes },
-                    zoom = CITY_ZOOM.takeIf { state.noRoutes },
+                    // No routes yet: city overview. A stop chosen: zoom to street level so the
+                    // rider sees the streets around their stop (the walk path reframes when walking).
+                    zoom = when {
+                        state.noRoutes -> CITY_ZOOM
+                        walk == null && state.stop != null -> STOP_ZOOM
+                        else -> null
+                    },
                     // Walking to the stop: draw the way there and keep the rider and the stop in view.
                     guidance = walk?.path.orEmpty(),
                     frame = walk?.path.orEmpty(),
@@ -233,8 +240,8 @@ fun DashboardScreen(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .padding(10.dp)
-                    // Never cover more than about half the map, whatever the screen size.
-                    .heightIn(max = maxHeight * 0.55f),
+                    // Keep the map dominant: the arrival card never covers more than ~40%.
+                    .heightIn(max = maxHeight * 0.4f),
             )
         }
     }

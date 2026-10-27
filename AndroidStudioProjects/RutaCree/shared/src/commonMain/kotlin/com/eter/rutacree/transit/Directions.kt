@@ -38,6 +38,8 @@ data class Directions(
 class DirectionsClient(
     private val baseUrl: String = "https://router.project-osrm.org",
     private val walkingBaseUrl: String = "https://routing.openstreetmap.de/routed-foot",
+    /** Our API: when set, walking routes go through it (reliable on networks that block OSRM). */
+    private val apiBaseUrl: String = "",
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     private val client = HttpClient {
@@ -50,13 +52,27 @@ class DirectionsClient(
     /** Null when there is no street path or the service can't be reached. */
     suspend fun driving(from: GeoPoint, to: GeoPoint): Directions? = route(baseUrl, from, to)
 
-    /** A path on sidewalks and footways; null like [driving]. */
-    suspend fun walking(from: GeoPoint, to: GeoPoint): Directions? = route(walkingBaseUrl, from, to)
+    /**
+     * A path on sidewalks and footways; null like [driving]. Goes through our API first (the server
+     * reaches OSRM even when the phone's network blocks it), then falls back to the public server.
+     */
+    suspend fun walking(from: GeoPoint, to: GeoPoint): Directions? {
+        if (apiBaseUrl.isNotBlank()) {
+            val url = "$apiBaseUrl/api/v1/routing/walk" +
+                "?from=${from.lon},${from.lat}&to=${to.lon},${to.lat}"
+            fetch(url)?.let { return it }
+        }
+        return route(walkingBaseUrl, from, to)
+    }
 
-    private suspend fun route(baseUrl: String, from: GeoPoint, to: GeoPoint): Directions? {
+    private suspend fun route(baseUrl: String, from: GeoPoint, to: GeoPoint): Directions? =
         // OSRM servers run one profile each; the name in the URL is not checked.
-        val url = "$baseUrl/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}" +
-            "?overview=full&geometries=geojson&steps=true"
+        fetch(
+            "$baseUrl/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}" +
+                "?overview=full&geometries=geojson&steps=true",
+        )
+
+    private suspend fun fetch(url: String): Directions? {
         val response = runCatching { client.get(url) }.getOrNull() ?: return null
         if (!response.status.isSuccess()) return null
         return runCatching { parseOsrmRoute(json, response.bodyAsText()) }.getOrNull()

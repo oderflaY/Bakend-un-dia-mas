@@ -44,6 +44,7 @@ import com.eter.rutacree.map.MapContent
 import com.eter.rutacree.map.PlatformMap
 import com.eter.rutacree.map.parseHexColor
 import com.eter.rutacree.map.rememberAnimatedBuses
+import com.eter.rutacree.map.STOP_ZOOM
 import com.eter.rutacree.transit.AppConfig
 import com.eter.rutacree.transit.Stop
 import com.eter.rutacree.transit.TransitRoute
@@ -78,7 +79,6 @@ import rutacree.shared.generated.resources.no_routes
 import rutacree.shared.generated.resources.routes_subtitle
 import rutacree.shared.generated.resources.routes_title
 
-private const val STOP_ZOOM = 15.5
 
 /** Every route on a map: its whole path, its stops in order, and a shortcut to use it on the Radar. */
 @Composable
@@ -104,7 +104,7 @@ fun RoutesScreen(
             return@Column
         }
 
-        Box(Modifier.weight(1.1f).fillMaxWidth().padding(vertical = 8.dp)) {
+        Box(Modifier.weight(1.9f).fillMaxWidth().padding(vertical = 8.dp)) {
             // Live buses are only followed for the Radar's route.
             val buses = rememberAnimatedBuses(
                 route,

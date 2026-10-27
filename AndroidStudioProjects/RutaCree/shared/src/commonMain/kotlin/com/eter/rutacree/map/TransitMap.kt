@@ -76,6 +76,9 @@ data class MapContent(
 val CITY_CENTER = GeoPoint(24.0277, -104.6532)
 const val CITY_ZOOM = 12.5
 
+/** Street-level zoom used when a single stop is focused, so street names are readable. */
+const val STOP_ZOOM = 16.0
+
 /** Native street map per platform. Must fall back to [SchematicMap] when it cannot render. */
 @Composable
 expect fun PlatformMap(config: AppConfig, content: MapContent, modifier: Modifier = Modifier)

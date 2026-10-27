@@ -146,7 +146,7 @@ class TransitViewModel(private val config: AppConfig) : ViewModel() {
     private val api = config.apiBaseUrl.takeIf { it.isNotBlank() }?.let(::RutaCreeApi)
     private val inputs = MutableStateFlow(Inputs(nowMinute = currentMinuteOfDay()))
     private var rampJob: Job? = null
-    private val directionsClient = DirectionsClient()
+    private val directionsClient = DirectionsClient(apiBaseUrl = config.apiBaseUrl)
     private var walkJob: Job? = null
     private var lastWalkRequest: Pair<GeoPoint, TimeMark>? = null
 
