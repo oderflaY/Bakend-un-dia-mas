@@ -38,6 +38,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.eter.rutacree.shared.R
 import com.eter.rutacree.transit.GeoPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -183,7 +184,7 @@ private class AndroidDeviceServices(private val context: Context) : DeviceServic
         }
         if (Build.VERSION.SDK_INT < 33 || granted(Manifest.permission.POST_NOTIFICATIONS)) {
             val notification = NotificationCompat.Builder(app, ALERTS_CHANNEL)
-                .setSmallIcon(app.applicationInfo.icon)
+                .setSmallIcon(R.drawable.ic_stat_bus)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))

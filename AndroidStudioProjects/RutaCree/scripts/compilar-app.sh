@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Compila la app apuntando a tu servidor y deja el APK en dist/.
+# Compila la app apuntando a tu servidor y deja el APK en dist/ (y en release también el .aab
+# que se sube a Google Play).
 #
 #   ./scripts/compilar-app.sh http://203.0.113.10:8080            # pruebas con IP (APK de depuración)
 #   ./scripts/compilar-app.sh https://api.rutacree.mx pk.xxxxx    # producción (APK firmado)
@@ -38,10 +39,19 @@ else
 	[[ "$url" == https://* ]] && echo "Aviso: no hay keystore.properties (scripts/crear-llave.sh); se genera APK de depuración."
 fi
 
-./gradlew -q "$task"
+# Cada subida a Play necesita un versionCode mayor: año-mes-día-hora (p. ej. 26102915).
+# Para cambiar la versión visible: VERSION=1.1 ./scripts/compilar-app.sh …
+version=(-PversionCode="$(date +%y%m%d%H)" -PversionName="${VERSION:-1.0}")
+./gradlew -q "${version[@]}" "$task"
 mkdir -p dist
-out="dist/RutaCree-$variant-$(date +%Y%m%d-%H%M).apk"
+stamp=$(date +%Y%m%d-%H%M)
+out="dist/RutaCree-$variant-$stamp.apk"
 cp "$apk" "$out"
+if [ "$variant" = release ]; then
+	./gradlew -q "${version[@]}" :androidApp:bundleRelease
+	cp androidApp/build/outputs/bundle/release/androidApp-release.aab "dist/RutaCree-$stamp.aab"
+	echo "Para Google Play: dist/RutaCree-$stamp.aab"
+fi
 grep -q "^MAPBOX_ACCESS_TOKEN=pk\." local.properties || echo "Aviso: sin token de Mapbox la app muestra el mapa esquemático."
 echo "APK listo: $out  (servidor: $url)"
 echo "Instalar por cable:  adb install -r $out   — o pásalo al teléfono y ábrelo."

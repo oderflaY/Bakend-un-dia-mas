@@ -32,7 +32,7 @@ class TrackingService : Service() {
             PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
         val notification = NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(applicationInfo.icon)
+            .setSmallIcon(R.drawable.ic_stat_bus)
             .setContentTitle(getString(R.string.tracking_title))
             .setContentText(getString(R.string.tracking_text))
             .setOngoing(true)

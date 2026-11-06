@@ -39,8 +39,10 @@ android {
         applicationId = "com.eter.rutacree"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        // Play rejects an upload whose versionCode is not higher than the last one:
+        // scripts/compilar-app.sh passes -PversionCode=<yyMMddHH>; -PversionName sets the visible one.
+        versionCode = (findProperty("versionCode") as String?)?.toInt() ?: 1
+        versionName = (findProperty("versionName") as String?) ?: "1.0"
 
         buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"${secret("MAPBOX_ACCESS_TOKEN")}\"")
         buildConfigField("String", "MAPBOX_STYLE_URL", "\"${secret("MAPBOX_STYLE_URL")}\"")
